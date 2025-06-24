@@ -1,9 +1,16 @@
-import React, { useState } from "react";
+//import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
 import { Mic, Zap, Shield, Clock, ArrowRight } from "lucide-react";
 import RecordMemory from "../components/RecordMemory";
-
+import { supabase } from "../utils/supabaseClient";
 const HomePage = () => {
   const [showRecording, setShowRecording] = useState(false);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      console.log("👤 Authenticated User:", data?.user);
+    });
+  }, []);
 
   const handleStartRecording = () => {
     setShowRecording(true);
@@ -90,7 +97,6 @@ const HomePage = () => {
           )}
         </div>
       </div>
-
       {/* Features Section - Only show when not recording */}
       {!showRecording && (
         <>
@@ -136,7 +142,6 @@ const HomePage = () => {
               })}
             </div>
           </div>
-
           {/* CTA Section */}
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl p-8 md:p-12 text-center text-white shadow-2xl">
             <div className="space-y-6">
@@ -166,6 +171,22 @@ const HomePage = () => {
         </>
       )}
     </div>
+  );
+};
+
+const DebugAuth = () => {
+  const handleCheckUser = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    console.log("🧠 User Data:", userData);
+  };
+
+  return (
+    <button
+      onClick={handleCheckUser}
+      className="bg-green-600 text-white px-4 py-2 rounded"
+    >
+      Check Supabase User
+    </button>
   );
 };
 

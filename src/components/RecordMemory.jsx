@@ -1,366 +1,309 @@
-import React, { useState, useRef, useEffect } from "react";
-import {
-  Mic,
-  Square,
-  Loader,
-  MessageSquare,
-  Brain,
-  AlertCircle,
-} from "lucide-react";
-import axios from "axios";
-
+import React, { useState, useEffect } from "react";
+import { Mic } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../utils/supabaseClient";
 const RecordMemory = () => {
   const [transcript, setTranscript] = useState("");
-  const [summary, setSummary] = useState("");
+  const [summaryData, setSummaryData] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState("");
-  const recognitionRef = useRef(null);
-  const finalTranscriptRef = useRef("");
-
-  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-
-  useEffect(() => {
-    // Cleanup on unmount
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-    };
-  }, []);
+  const [recognitionInstance, setRecognitionInstance] = useState(null);
+  const [showRecording, setShowRecording] = useState(false);
+  const navigate = useNavigate();
 
   const startListening = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      setError(
-        "Your browser does not support Speech Recognition. Please use Chrome, Edge, or Safari."
-      );
+      alert("Your browser does not support Speech Recognition 😔");
       return;
     }
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
-    recognition.interimResults = true;
     recognition.lang = "en-US";
-    recognition.maxAlternatives = 1;
+    recognition.interimResults = false;
+    recognition.start();
 
-    recognitionRef.current = recognition;
     setIsListening(true);
-    setTranscript("");
-    setSummary("");
-    setError("");
-    finalTranscriptRef.current = "";
-
-    recognition.onstart = () => {
-      console.log("Speech recognition started");
-      setError("");
-    };
+    setRecognitionInstance(recognition);
 
     recognition.onresult = (event) => {
-      let interimTranscript = "";
-      let finalTranscript = "";
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcriptText = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcriptText + " ";
-        } else {
-          interimTranscript += transcriptText;
-        }
+      let fullTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        fullTranscript += event.results[i][0].transcript + " ";
       }
-
-      // Add final transcript to our running total
-      if (finalTranscript) {
-        finalTranscriptRef.current += finalTranscript;
-      }
-
-      // Update display with both final and interim results
-      const fullTranscript = finalTranscriptRef.current + interimTranscript;
-      setTranscript(fullTranscript);
+      setTranscript((prev) => prev + fullTranscript.trim() + " ");
     };
 
     recognition.onerror = (event) => {
-      console.error("Speech Recognition Error:", event.error);
-      let errorMessage = "Voice input error occurred.";
-
-      switch (event.error) {
-        case "no-speech":
-          errorMessage = "No speech detected. Please try speaking again.";
-          break;
-        case "audio-capture":
-          errorMessage = "Microphone access denied or not available.";
-          break;
-        case "not-allowed":
-          errorMessage =
-            "Microphone permission denied. Please allow microphone access and refresh the page.";
-          break;
-        case "network":
-          errorMessage = "Network error occurred during speech recognition.";
-          break;
-        case "aborted":
-          // Don't show error for manual stops
-          return;
-        default:
-          errorMessage = `Speech recognition error: ${event.error}`;
-      }
-
-      setError(errorMessage);
+      console.error("Speech Recognition Error:", event);
+      alert("Voice input error!");
       setIsListening(false);
     };
 
     recognition.onend = () => {
-      console.log("Speech recognition ended");
-      if (isListening) {
-        // If we're still supposed to be listening, restart recognition
-        // This handles cases where recognition stops unexpectedly
-        setTimeout(() => {
-          if (isListening && recognitionRef.current) {
-            try {
-              recognitionRef.current.start();
-            } catch (e) {
-              console.log("Recognition restart failed:", e);
-              setIsListening(false);
-            }
-          }
-        }, 100);
-      }
+      setIsListening(false);
     };
+  };
 
-    try {
-      recognition.start();
-    } catch (error) {
-      console.error("Failed to start recognition:", error);
-      setError("Failed to start voice recognition. Please try again.");
+  const stopListening = () => {
+    if (recognitionInstance) {
+      recognitionInstance.stop();
       setIsListening(false);
     }
   };
 
-  const stopListening = () => {
-    setIsListening(false);
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    // Ensure we keep the final transcript
-    setTranscript(finalTranscriptRef.current.trim());
+  const handleStartRecording = () => {
+    setShowRecording(true);
+    setTranscript("");
+    setSummaryData(null);
   };
 
-  const summarizeText = async () => {
-    const textToSummarize = transcript.trim();
-
-    if (!textToSummarize) {
-      setError("No text to summarize. Please record something first.");
-      return;
-    }
-
-    if (!apiKey) {
-      setError(
-        "OpenAI API key not found. Please add VITE_OPENAI_API_KEY to your environment variables."
-      );
-      return;
-    }
-
+  const processMemory = async () => {
     setIsProcessing(true);
-    setSummary("");
-    setError("");
-
     try {
-      const response = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-3.5-turbo",
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a helpful assistant that creates concise, well-structured summaries of voice recordings. Focus on key points, action items, and important details. Keep the summary clear and organized with bullet points when appropriate.",
-            },
-            {
-              role: "user",
-              content: `Please summarize the following voice recording transcript:\n\n${textToSummarize}`,
-            },
-          ],
-          max_tokens: 500,
-          temperature: 0.7,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // Replace with actual Bolt AI action output when available
+      const boltGeneratedText = `SUMMARY: You enjoyed a peaceful walk.\nEMOTION: Peaceful\nKEYWORDS: walk, quiet, nature\nTITLE: Evening Serenity\nPOEM: The breeze kissed trees / Silence hummed with peace`;
 
-      const aiSummary = response.data.choices[0].message.content;
-      setSummary(aiSummary);
+      const lines = boltGeneratedText.trim().split("\n");
+      const extract = (label) =>
+        lines
+          .find((line) => line.startsWith(label))
+          ?.split(":")[1]
+          ?.trim();
+
+      setSummaryData({
+        summary: extract("SUMMARY"),
+        emotion: extract("EMOTION"),
+        keywords: extract("KEYWORDS")?.split(", ") || [],
+        title: extract("TITLE"),
+        poem: extract("POEM"),
+      });
     } catch (error) {
-      console.error("OpenAI API error:", error);
-      let errorMessage = "Failed to generate summary.";
-
-      if (error.response?.status === 401) {
-        errorMessage = "Invalid API key. Please check your OpenAI API key.";
-      } else if (error.response?.status === 429) {
-        errorMessage = "API rate limit exceeded. Please try again later.";
-      } else if (error.response?.data?.error?.message) {
-        errorMessage = `API Error: ${error.response.data.error.message}`;
-      } else if (error.code === "NETWORK_ERROR") {
-        errorMessage = "Network error. Please check your internet connection.";
-      }
-
-      setError(errorMessage);
+      console.error(error);
+      alert("Something went wrong while processing your memory.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const clearAll = () => {
-    setTranscript("");
-    setSummary("");
-    setError("");
-    finalTranscriptRef.current = "";
+  const saveToMemories = async () => {
+    console.log("💾 Save button clicked!");
+
+    if (!summaryData || !transcript) {
+      alert("No data to save.");
+      return;
+    }
+
+    const { title, summary, emotion, keywords, poem } = summaryData;
+
+    // ✅ Get the current authenticated user from Supabase
+    const { data: userData, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !userData?.user?.id) {
+      alert("User not authenticated!");
+      console.error("Auth error:", authError);
+      return;
+    }
+
+    const userId = userData.user.id;
+
+    // ✅ Insert memory data into 'memories' table
+    const { error } = await supabase.from("memories").insert([
+      {
+        user_id: userId,
+        transcript,
+        summary,
+        emotion,
+        title,
+        poem,
+        keywords,
+      },
+    ]);
+
+    if (error) {
+      console.error("❌ Insert error:", error);
+      alert("Failed to save memory!");
+    } else {
+      alert("🎉 Memory saved successfully!");
+      navigate("/timeline"); // Navigate to timeline page after saving
+    }
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Recording Controls */}
-      <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-2 border-purple-200">
-        <div className="flex flex-col items-center space-y-4">
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <Mic className="h-6 w-6 text-purple-600" />
-            Voice Recording
-          </h2>
-
-          <div className="flex gap-4 flex-wrap justify-center">
-            {!isListening ? (
-              <button
-                onClick={startListening}
-                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
-              >
-                <Mic className="h-5 w-5" />
-                Start Recording
-              </button>
-            ) : (
-              <button
-                onClick={stopListening}
-                className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
-              >
-                <Square className="h-5 w-5" />
-                Stop Recording
-              </button>
-            )}
-
-            {(transcript || summary) && (
-              <button
-                onClick={clearAll}
-                className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-full font-medium transition-all duration-300"
-              >
-                Clear All
-              </button>
-            )}
-          </div>
-
-          {isListening && (
-            <div className="flex items-center gap-2 text-red-600 animate-pulse">
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
-              <span className="text-sm font-medium">
-                🎙️ Recording... Speak continuously
+    <div className="py-10 px-4 sm:px-8 max-w-6xl mx-auto">
+      {/* Recording Section */}
+      <div className="flex flex-col items-center gap-6 px-4">
+        {!showRecording ? (
+          <button
+            onClick={handleStartRecording}
+            className="group relative overflow-hidden rounded-full p-6 sm:p-8 shadow-2xl transition-all duration-300 transform hover:scale-110 hover:shadow-purple-500/25 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+            style={{
+              boxShadow:
+                "0 25px 50px -12px rgba(147, 51, 234, 0.25), 0 0 30px rgba(147, 51, 234, 0.3)",
+            }}
+          >
+            <div className="absolute inset-0 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div
+              className="absolute inset-0 rounded-full animate-pulse opacity-0 group-hover:opacity-30 transition-opacity duration-300"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(147, 51, 234, 0.4) 0%, transparent 70%)",
+              }}
+            />
+            <div className="relative flex items-center gap-2 sm:gap-3 text-white">
+              <Mic className="h-6 w-6 sm:h-8 sm:w-8" />
+              <span className="text-lg sm:text-xl font-semibold">
+                🎙 Start Recording
               </span>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Error Display */}
-      {error && (
-        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4">
-          <div className="flex items-center gap-2 text-red-700">
-            <AlertCircle className="h-5 w-5" />
-            <span className="font-medium">Error:</span>
-          </div>
-          <p className="text-red-600 mt-1">{error}</p>
-        </div>
-      )}
-
-      {/* Transcript Display */}
-      {transcript && (
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-2 border-purple-200">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-indigo-600" />
-                <h3 className="text-lg font-semibold text-slate-800">
-                  Your Voice Input
-                </h3>
-              </div>
-              <span className="text-sm text-slate-500">
-                {transcript.split(" ").filter((word) => word.length > 0).length}{" "}
-                words
-              </span>
-            </div>
-
-            <div className="bg-slate-50 rounded-lg p-4 border-2 border-slate-200 min-h-[120px] max-h-[300px] overflow-y-auto">
-              <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
-                {transcript}
-              </p>
-            </div>
-
-            <div className="flex justify-center">
-              <button
-                onClick={summarizeText}
-                disabled={isProcessing || !transcript.trim()}
-                className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-6 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader className="h-5 w-5 animate-spin" />
-                    Generating Summary...
-                  </>
+          </button>
+        ) : (
+          <div className="w-full max-w-6xl space-y-6 sm:space-y-8">
+            {/* Recording Controls */}
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 sm:p-8 shadow-lg border-2 border-purple-200">
+              <div className="text-center space-y-6">
+                {!isListening ? (
+                  <button
+                    onClick={startListening}
+                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-6 sm:px-8 py-3 sm:py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  >
+                    🎤 Start Recording
+                  </button>
                 ) : (
-                  <>
-                    <Brain className="h-5 w-5" />
-                    Generate AI Summary
-                  </>
+                  <div className="space-y-4">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-full"></div>
+                    </div>
+                    <button
+                      onClick={stopListening}
+                      className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 px-6 sm:px-8 py-3 sm:py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
+                    >
+                      ⏹️ Stop Recording
+                    </button>
+                    <p className="text-slate-600 text-sm sm:text-base">
+                      Listening... Speak clearly into your microphone
+                    </p>
+                  </div>
                 )}
-              </button>
+              </div>
             </div>
+
+            {/* Transcript Display */}
+            {transcript && (
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 sm:p-8 shadow-lg border-2 border-purple-200">
+                <h3 className="text-lg sm:text-xl font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                  📝 Your Voice Input
+                </h3>
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
+                  <p className="text-slate-700 leading-relaxed text-sm sm:text-base">
+                    {transcript}
+                  </p>
+                </div>
+
+                <div className="text-center">
+                  <button
+                    onClick={processMemory}
+                    disabled={isProcessing}
+                    className={`bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-6 sm:px-8 py-3 sm:py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg ${
+                      isProcessing ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                  >
+                    {isProcessing ? (
+                      <span className="flex items-center gap-2">
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Processing Memory...
+                      </span>
+                    ) : (
+                      "🧠 Process Memory"
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Memory Analysis Display */}
+            {summaryData && (
+              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 sm:p-8 shadow-lg border-2 border-purple-200">
+                <h3 className="text-lg sm:text-xl font-semibold text-purple-800 mb-6 flex items-center gap-2">
+                  ✨ Memory Analysis
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-slate-700 mb-2 text-sm sm:text-base">
+                        Title
+                      </h4>
+                      <p className="text-slate-600 bg-white/50 p-3 rounded-lg text-sm sm:text-base">
+                        {summaryData.title}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold text-slate-700 mb-2 text-sm sm:text-base">
+                        Emotion
+                      </h4>
+                      <span className="inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium capitalize">
+                        {summaryData.emotion}
+                      </span>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold text-slate-700 mb-2 text-sm sm:text-base">
+                        Keywords
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {summaryData.keywords.map((keyword, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs sm:text-sm rounded-full"
+                          >
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-slate-700 mb-2 text-sm sm:text-base">
+                        Summary
+                      </h4>
+                      <p className="text-slate-600 bg-white/50 p-3 rounded-lg leading-relaxed text-sm sm:text-base">
+                        {summaryData.summary}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold text-slate-700 mb-2 text-sm sm:text-base">
+                        Generated Poem
+                      </h4>
+                      <div className="bg-white/50 p-3 rounded-lg">
+                        <p className="text-slate-600 italic leading-relaxed whitespace-pre-line text-sm sm:text-base">
+                          {summaryData.poem}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center mt-6 sm:mt-8">
+                  <button
+                    onClick={saveToMemories}
+                    className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-6 sm:px-8 py-3 sm:py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  >
+                    💾 Save to Memories
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
-
-      {/* Summary Display */}
-      {summary && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 shadow-xl border-2 border-blue-200">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-slate-800">
-                🧠 AI Summary
-              </h3>
-            </div>
-
-            <div className="bg-white/80 rounded-lg p-4 border border-blue-200">
-              <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
-                {summary}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Instructions */}
-      <div className="bg-amber-50 rounded-2xl p-4 border-2 border-amber-200">
-        <div className="text-center space-y-2">
-          <p className="text-sm text-amber-800 font-medium">
-            💡 Tips for better recording:
-          </p>
-          <p className="text-xs text-amber-700">
-            Speak clearly • Allow microphone access • Use Chrome/Edge for best
-            results • Keep background noise minimal • Recording continues until
-            you stop it
-          </p>
-        </div>
+        )}
       </div>
     </div>
   );
