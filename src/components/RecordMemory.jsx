@@ -1,23 +1,53 @@
 import React, { useState, useEffect } from "react";
-import { Mic } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
+import { Mic, Shield, Hash, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../utils/supabaseClient";
+import { processTranscriptWithAI } from "../utils/aiProcessor";
+import { storeVerifiedMemory } from "../utils/blockchainVerification";
+import { useToast } from "../hooks/use-toast";
+
 const RecordMemory = () => {
   const [transcript, setTranscript] = useState("");
   const [summaryData, setSummaryData] = useState(null);
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [recognitionInstance, setRecognitionInstance] = useState(null);
   const [showRecording, setShowRecording] = useState(false);
+  const [recordingStartTime, setRecordingStartTime] = useState(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [verificationStatus, setVerificationStatus] = useState(null);
+  
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Timer for recording duration
+  useEffect(() => {
+    let interval;
+    if (isListening && recordingStartTime) {
+      interval = setInterval(() => {
+        setRecordingDuration(Math.floor((Date.now() - recordingStartTime) / 1000));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isListening, recordingStartTime]);
+
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const startListening = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert("Your browser does not support Speech Recognition 😔");
+      toast({
+        title: "Browser Not Supported",
+        description: "Your browser does not support Speech Recognition",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -28,6 +58,7 @@ const RecordMemory = () => {
     recognition.start();
 
     setIsListening(true);
+    setRecordingStartTime(Date.now());
     setRecognitionInstance(recognition);
 
     recognition.onresult = (event) => {
@@ -40,7 +71,11 @@ const RecordMemory = () => {
 
     recognition.onerror = (event) => {
       console.error("Speech Recognition Error:", event);
-      alert("Voice input error!");
+      toast({
+        title: "Recording Error",
+        description: "There was an error with voice recognition",
+        variant: "destructive",
+      });
       setIsListening(false);
     };
 
@@ -60,82 +95,110 @@ const RecordMemory = () => {
     setShowRecording(true);
     setTranscript("");
     setSummaryData(null);
+    setRecordingDuration(0);
+    setVerificationStatus(null);
   };
 
   const processMemory = async () => {
+    if (!transcript.trim()) {
+      toast({
+        title: "No Content",
+        description: "Please record some content before processing",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
     try {
-      // Replace with actual Bolt AI action output when available
-      const boltGeneratedText = `SUMMARY: You enjoyed a peaceful walk.\nEMOTION: Peaceful\nKEYWORDS: walk, quiet, nature\nTITLE: Evening Serenity\nPOEM: The breeze kissed trees / Silence hummed with peace`;
-
-      const lines = boltGeneratedText.trim().split("\n");
-      const extract = (label) =>
-        lines
-          .find((line) => line.startsWith(label))
-          ?.split(":")[1]
-          ?.trim();
-
-      setSummaryData({
-        summary: extract("SUMMARY"),
-        emotion: extract("EMOTION"),
-        keywords: extract("KEYWORDS")?.split(", ") || [],
-        title: extract("TITLE"),
-        poem: extract("POEM"),
+      const aiResults = await processTranscriptWithAI(transcript);
+      setSummaryData(aiResults);
+      
+      toast({
+        title: "Memory Processed",
+        description: "Your memory has been analyzed successfully",
       });
     } catch (error) {
-      console.error(error);
-      alert("Something went wrong while processing your memory.");
+      console.error("Processing error:", error);
+      toast({
+        title: "Processing Error",
+        description: "Failed to process your memory. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
   };
 
   const saveToMemories = async () => {
-    console.log("💾 Save button clicked!");
-
     if (!summaryData || !transcript) {
-      alert("No data to save.");
+      toast({
+        title: "No Data",
+        description: "No data to save. Please record and process first.",
+        variant: "destructive",
+      });
       return;
     }
 
-    const { title, summary, emotion, keywords, poem } = summaryData;
+    setIsSaving(true);
+    try {
+      // Get authenticated user
+      const { data: userData, error: authError } = await supabase.auth.getUser();
 
-    // ✅ Get the current authenticated user from Supabase
-    const { data: userData, error: authError } = await supabase.auth.getUser();
+      if (authError || !userData?.user?.id) {
+        toast({
+          title: "Authentication Error",
+          description: "Please log in to save memories",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (authError || !userData?.user?.id) {
-      alert("User not authenticated!");
-      console.error("Auth error:", authError);
-      return;
-    }
+      const memoryData = {
+        user_id: userData.user.id,
+        transcript: transcript.trim(),
+        title: summaryData.title,
+        summary: summaryData.summary,
+        emotion: summaryData.emotion,
+        keywords: summaryData.keywords,
+        poem: summaryData.poem,
+        audio_duration: recordingDuration,
+        created_at: new Date().toISOString()
+      };
 
-    const userId = userData.user.id;
+      // Store with blockchain verification
+      const result = await storeVerifiedMemory(memoryData);
+      
+      setVerificationStatus({
+        verified: result.verified,
+        hash: result.hash,
+        blockId: result.block.id
+      });
 
-    // ✅ Insert memory data into 'memories' table
-    const { error } = await supabase.from("memories").insert([
-      {
-        user_id: userId,
-        transcript,
-        summary,
-        emotion,
-        title,
-        poem,
-        keywords,
-      },
-    ]);
+      toast({
+        title: "Memory Saved Successfully! 🎉",
+        description: "Your memory has been saved and verified on the blockchain",
+      });
 
-    if (error) {
-      console.error("❌ Insert error:", error);
-      alert("Failed to save memory!");
-    } else {
-      alert("🎉 Memory saved successfully!");
-      navigate("/timeline"); // Navigate to timeline page after saving
+      // Navigate to timeline after a short delay
+      setTimeout(() => {
+        navigate("/timeline");
+      }, 2000);
+
+    } catch (error) {
+      console.error("Save error:", error);
+      toast({
+        title: "Save Error",
+        description: "Failed to save memory. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   return (
     <div className="py-10 px-4 sm:px-8 max-w-6xl mx-auto">
-      {/* Recording Section */}
       <div className="flex flex-col items-center gap-6 px-4">
         {!showRecording ? (
           <button
@@ -178,6 +241,9 @@ const RecordMemory = () => {
                     <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-red-500 rounded-full flex items-center justify-center animate-pulse">
                       <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-full"></div>
                     </div>
+                    <div className="text-2xl font-mono text-red-600 font-bold">
+                      {formatDuration(recordingDuration)}
+                    </div>
                     <button
                       onClick={stopListening}
                       className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 px-6 sm:px-8 py-3 sm:py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
@@ -203,22 +269,30 @@ const RecordMemory = () => {
                     {transcript}
                   </p>
                 </div>
+                <div className="flex items-center gap-2 text-sm text-slate-600 mb-6">
+                  <span>Duration: {formatDuration(recordingDuration)}</span>
+                  <span>•</span>
+                  <span>Words: {transcript.trim().split(' ').length}</span>
+                </div>
 
                 <div className="text-center">
                   <button
                     onClick={processMemory}
                     disabled={isProcessing}
-                    className={`bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-6 sm:px-8 py-3 sm:py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg ${
+                    className={`bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-6 sm:px-8 py-3 sm:py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2 mx-auto ${
                       isProcessing ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                   >
                     {isProcessing ? (
-                      <span className="flex items-center gap-2">
+                      <>
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                         Processing Memory...
-                      </span>
+                      </>
                     ) : (
-                      "🧠 Process Memory"
+                      <>
+                        <Zap className="h-5 w-5" />
+                        🧠 Process Memory
+                      </>
                     )}
                   </button>
                 </div>
@@ -295,10 +369,52 @@ const RecordMemory = () => {
                 <div className="text-center mt-6 sm:mt-8">
                   <button
                     onClick={saveToMemories}
-                    className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-6 sm:px-8 py-3 sm:py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
+                    disabled={isSaving}
+                    className={`bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-6 sm:px-8 py-3 sm:py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2 mx-auto ${
+                      isSaving ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
                   >
-                    💾 Save to Memories
+                    {isSaving ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Saving & Verifying...
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="h-5 w-5" />
+                        💾 Save to Memories
+                      </>
+                    )}
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* Blockchain Verification Status */}
+            {verificationStatus && (
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 shadow-lg border-2 border-green-200">
+                <div className="flex items-center gap-3 mb-4">
+                  <Shield className="h-6 w-6 text-green-600" />
+                  <h3 className="text-lg font-semibold text-green-800">
+                    Blockchain Verification Complete
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Hash className="h-4 w-4 text-green-600" />
+                    <span className="text-sm text-green-700">
+                      Hash: {verificationStatus.hash.substring(0, 16)}...
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-green-600" />
+                    <span className="text-sm text-green-700">
+                      Block ID: {verificationStatus.blockId}
+                    </span>
+                  </div>
+                  <p className="text-sm text-green-600 font-medium">
+                    ✅ Your memory has been cryptographically secured and verified
+                  </p>
                 </div>
               </div>
             )}
