@@ -1,35 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Search, Shield, Hash, Clock, Filter } from "lucide-react";
+import { Calendar, Search, Shield, Hash, Clock, Filter, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import MemoryCard from "../components/MemoryCard";
 import { supabase } from "../utils/supabaseClient";
 import { verifyMemoryIntegrity } from "../utils/blockchainVerification";
 import { searchMemoriesWithAI } from "../utils/aiProcessor";
 import { useToast } from "../hooks/use-toast";
 
-const TimelinePage = () => {
+const TimelinePage = ({ user }) => {
   const [memories, setMemories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [playingMemoryId, setPlayingMemoryId] = useState(null);
   const [filterEmotion, setFilterEmotion] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
-  const [user, setUser] = useState(null);
   const { toast } = useToast();
-
-  useEffect(() => {
-    initializeUser();
-  }, []);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
       loadMemories();
+    } else {
+      setIsLoading(false);
     }
   }, [user, sortBy]);
-
-  const initializeUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-  };
 
   const loadMemories = async () => {
     if (!user) return;
@@ -156,9 +150,10 @@ const TimelinePage = () => {
       setPlayingMemoryId(memoryId);
       toast({
         title: "Playing Memory",
-        description: "Memory playback started. (This is a simulation)",
+        description: "Memory playback started. (Audio simulation)",
       });
 
+      // Simulate playback duration
       setTimeout(() => {
         setPlayingMemoryId(null);
       }, 5000);
@@ -174,11 +169,11 @@ const TimelinePage = () => {
 
   // Loading skeleton component
   const LoadingSkeleton = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {[...Array(6)].map((_, index) => (
         <div
           key={index}
-          className="bg-white/70 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border-2 border-purple-200 shadow-lg animate-pulse"
+          className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border-2 border-purple-200 shadow-lg animate-pulse"
         >
           <div className="space-y-4">
             <div className="h-4 bg-purple-200 rounded w-3/4"></div>
@@ -196,26 +191,20 @@ const TimelinePage = () => {
 
   // Empty state component
   const EmptyState = () => (
-    <div className="text-center py-12 sm:py-16 space-y-6 px-4">
-      <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto bg-gradient-to-r from-purple-200 to-indigo-200 rounded-full flex items-center justify-center">
-        <Calendar className="h-10 w-10 sm:h-12 sm:w-12 text-purple-400" />
+    <div className="text-center py-16 space-y-6">
+      <div className="w-24 h-24 mx-auto bg-gradient-to-r from-purple-200 to-indigo-200 rounded-full flex items-center justify-center">
+        <Calendar className="h-12 w-12 text-purple-400" />
       </div>
       <div className="space-y-2">
-        <h3
-          className="text-xl sm:text-2xl font-semibold text-slate-700"
-          style={{
-            fontFamily: '"Nunito", "Inter", system-ui, sans-serif',
-            fontWeight: "700",
-          }}
-        >
+        <h3 className="text-2xl font-semibold text-slate-700">
           No memories yet
         </h3>
-        <p className="text-slate-600 max-w-md mx-auto text-sm sm:text-base">
+        <p className="text-slate-600 max-w-md mx-auto">
           Start your first recording to see your timeline fill up with beautiful memories
         </p>
         <button
-          onClick={() => (window.location.href = "/")}
-          className="mt-4 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 px-4 sm:px-6 py-2 sm:py-3 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
+          onClick={() => navigate("/")}
+          className="mt-4 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 px-6 py-3 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105"
         >
           Create Your First Memory
         </button>
@@ -225,27 +214,46 @@ const TimelinePage = () => {
 
   if (!user) {
     return (
-      <div className="text-center py-16">
-        <h2 className="text-2xl font-semibold text-slate-700 mb-4">Please Log In</h2>
-        <p className="text-slate-600 mb-6">You need to be logged in to view your memories.</p>
-        <button
-          onClick={() => window.location.href = "/login"}
-          className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 px-6 py-3 text-white font-semibold rounded-xl transition-all duration-300"
-        >
-          Go to Login
-        </button>
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center space-y-6">
+          <div className="w-20 h-20 mx-auto bg-gradient-to-r from-purple-200 to-indigo-200 rounded-full flex items-center justify-center">
+            <Shield className="h-10 w-10 text-purple-400" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold text-slate-700">Please Log In</h2>
+            <p className="text-slate-600 max-w-md mx-auto">
+              You need to be logged in to view your memories and access the timeline.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/login")}
+            className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 px-6 py-3 text-white font-semibold rounded-xl transition-all duration-300"
+          >
+            Go to Login
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+    <div className="min-h-screen p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200 px-4 py-2 rounded-lg hover:bg-purple-50"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </button>
+          </div>
+          
           <div className="text-center md:text-left">
             <h1
-              className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-800 mb-4"
+              className="text-4xl md:text-5xl font-bold text-slate-800 mb-4"
               style={{
                 fontFamily: '"Nunito", "Inter", system-ui, sans-serif',
                 fontWeight: "800",
@@ -254,7 +262,7 @@ const TimelinePage = () => {
             >
               Your Memory Timeline
             </h1>
-            <p className="text-base sm:text-lg text-slate-700 max-w-2xl">
+            <p className="text-lg text-slate-700 max-w-2xl">
               Browse through your recorded memories with blockchain verification. Each memory is cryptographically secured.
             </p>
           </div>
@@ -269,7 +277,7 @@ const TimelinePage = () => {
                 placeholder="Search your memories..."
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 sm:py-3 bg-white/70 backdrop-blur-sm border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base"
+                className="w-full pl-10 pr-4 py-3 bg-white/70 backdrop-blur-sm border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
               />
             </div>
 
@@ -302,33 +310,33 @@ const TimelinePage = () => {
           {/* Stats */}
           {memories.length > 0 && (
             <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-              <div className="bg-white/70 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border border-purple-200 flex items-center gap-2">
+              <div className="bg-white/70 backdrop-blur-sm px-4 py-2 rounded-lg border border-purple-200 flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-purple-600" />
-                <span className="text-purple-600 font-semibold text-sm sm:text-base">
+                <span className="text-purple-600 font-semibold">
                   {memories.length}
                 </span>
-                <span className="text-slate-600 text-sm sm:text-base">
+                <span className="text-slate-600">
                   Total Memories
                 </span>
               </div>
               
-              <div className="bg-white/70 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border border-green-200 flex items-center gap-2">
+              <div className="bg-white/70 backdrop-blur-sm px-4 py-2 rounded-lg border border-green-200 flex items-center gap-2">
                 <Shield className="h-4 w-4 text-green-600" />
-                <span className="text-green-600 font-semibold text-sm sm:text-base">
+                <span className="text-green-600 font-semibold">
                   {memories.filter(m => m.verification_status === 'verified').length}
                 </span>
-                <span className="text-slate-600 text-sm sm:text-base">
+                <span className="text-slate-600">
                   Verified
                 </span>
               </div>
 
               {searchQuery && (
-                <div className="bg-white/70 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-lg border border-indigo-200 flex items-center gap-2">
+                <div className="bg-white/70 backdrop-blur-sm px-4 py-2 rounded-lg border border-indigo-200 flex items-center gap-2">
                   <Search className="h-4 w-4 text-indigo-600" />
-                  <span className="text-indigo-600 font-semibold text-sm sm:text-base">
+                  <span className="text-indigo-600 font-semibold">
                     {filteredMemories.length}
                   </span>
-                  <span className="text-slate-600 text-sm sm:text-base">
+                  <span className="text-slate-600">
                     Search Results
                   </span>
                 </div>
@@ -342,18 +350,12 @@ const TimelinePage = () => {
           <LoadingSkeleton />
         ) : filteredMemories.length === 0 ? (
           searchQuery ? (
-            <div className="text-center py-12 sm:py-16 space-y-4 px-4">
-              <Search className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-purple-300" />
-              <h3
-                className="text-lg sm:text-xl font-semibold text-slate-700"
-                style={{
-                  fontFamily: '"Nunito", "Inter", system-ui, sans-serif',
-                  fontWeight: "700",
-                }}
-              >
+            <div className="text-center py-16 space-y-4">
+              <Search className="h-16 w-16 mx-auto text-purple-300" />
+              <h3 className="text-xl font-semibold text-slate-700">
                 No memories found
               </h3>
-              <p className="text-slate-600 text-sm sm:text-base">
+              <p className="text-slate-600">
                 Try adjusting your search terms or create new memories
               </p>
             </div>
@@ -361,7 +363,7 @@ const TimelinePage = () => {
             <EmptyState />
           )
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredMemories.map((memory) => (
               <div key={memory.id} className="relative">
                 <MemoryCard
