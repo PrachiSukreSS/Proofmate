@@ -1,168 +1,180 @@
 /**
- * AI Processing Utility for Memory Analysis
- * Handles AI summarization, emotion detection, and content generation
+ * Enhanced AI Processing Utility
+ * Integrates OpenAI for intelligent memory analysis
  */
 
-import { supabase } from './supabaseClient';
+import {
+  processTranscriptWithOpenAI,
+  searchMemoriesWithAI as openAISearchMemories,
+} from "./openaiProcessor";
+import { supabase } from "./supabaseClient";
 
 /**
- * Process transcript with AI to extract insights
+ * Main processing function - now uses OpenAI
  */
-export const processTranscriptWithAI = async (transcript) => {
+export const processTranscriptWithAI = async (
+  transcript,
+  context = "general"
+) => {
   try {
-    // For now, we'll use a mock AI processor
-    // In production, this would call OpenAI API through Supabase Edge Functions
-    
-    const mockAIResponse = await mockAIAnalysis(transcript);
-    
-    return {
-      summary: mockAIResponse.summary,
-      emotion: mockAIResponse.emotion,
-      keywords: mockAIResponse.keywords,
-      title: mockAIResponse.title,
-      poem: mockAIResponse.poem,
-      confidence: mockAIResponse.confidence
-    };
+    console.log(
+      "Processing transcript with AI:",
+      transcript.substring(0, 50) + "..."
+    );
+
+    // Use OpenAI for processing
+    const aiResults = await processTranscriptWithOpenAI(transcript, context);
+
+    console.log("AI processing complete:", aiResults);
+    return aiResults;
   } catch (error) {
-    console.error('Error processing transcript:', error);
+    console.error("Error in AI processing:", error);
     throw error;
   }
 };
 
 /**
- * Mock AI analysis (replace with real AI API calls)
- */
-const mockAIAnalysis = async (transcript) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  const words = transcript.toLowerCase().split(' ');
-  const wordCount = words.length;
-  
-  // Simple emotion detection based on keywords
-  const emotionKeywords = {
-    happy: ['happy', 'joy', 'excited', 'great', 'wonderful', 'amazing', 'love', 'fantastic'],
-    sad: ['sad', 'depressed', 'down', 'upset', 'crying', 'tears', 'lonely', 'hurt'],
-    anxious: ['worried', 'nervous', 'anxious', 'stress', 'panic', 'fear', 'scared'],
-    calm: ['peaceful', 'calm', 'relaxed', 'serene', 'quiet', 'tranquil', 'meditation'],
-    excited: ['excited', 'thrilled', 'pumped', 'energetic', 'enthusiastic'],
-    thoughtful: ['thinking', 'pondering', 'reflecting', 'considering', 'wondering']
-  };
-  
-  let detectedEmotion = 'neutral';
-  let maxMatches = 0;
-  
-  for (const [emotion, keywords] of Object.entries(emotionKeywords)) {
-    const matches = keywords.filter(keyword => 
-      words.some(word => word.includes(keyword))
-    ).length;
-    
-    if (matches > maxMatches) {
-      maxMatches = matches;
-      detectedEmotion = emotion;
-    }
-  }
-  
-  // Extract keywords (simple approach - most frequent meaningful words)
-  const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'was', 'are', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their'];
-  
-  const meaningfulWords = words
-    .filter(word => word.length > 3 && !stopWords.includes(word))
-    .reduce((acc, word) => {
-      acc[word] = (acc[word] || 0) + 1;
-      return acc;
-    }, {});
-  
-  const keywords = Object.entries(meaningfulWords)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 5)
-    .map(([word]) => word);
-  
-  // Generate title
-  const title = generateTitle(transcript, detectedEmotion);
-  
-  // Generate summary
-  const summary = generateSummary(transcript, wordCount);
-  
-  // Generate poem
-  const poem = generatePoem(transcript, detectedEmotion, keywords);
-  
-  return {
-    summary,
-    emotion: detectedEmotion,
-    keywords,
-    title,
-    poem,
-    confidence: Math.min(0.7 + (maxMatches * 0.1), 0.95)
-  };
-};
-
-const generateTitle = (transcript, emotion) => {
-  const titleTemplates = {
-    happy: ['Joyful Moment', 'Happy Thoughts', 'Bright Memory', 'Cheerful Reflection'],
-    sad: ['Melancholy Moment', 'Reflective Thoughts', 'Quiet Contemplation', 'Somber Memory'],
-    anxious: ['Worried Thoughts', 'Anxious Moment', 'Restless Mind', 'Concerned Reflection'],
-    calm: ['Peaceful Moment', 'Serene Thoughts', 'Tranquil Memory', 'Quiet Reflection'],
-    excited: ['Thrilling Moment', 'Energetic Thoughts', 'Dynamic Memory', 'Vibrant Reflection'],
-    thoughtful: ['Deep Thoughts', 'Contemplative Moment', 'Reflective Memory', 'Mindful Observation'],
-    neutral: ['Personal Reflection', 'Memory Capture', 'Thought Recording', 'Voice Note']
-  };
-  
-  const templates = titleTemplates[emotion] || titleTemplates.neutral;
-  return templates[Math.floor(Math.random() * templates.length)];
-};
-
-const generateSummary = (transcript, wordCount) => {
-  if (wordCount < 20) {
-    return `A brief ${wordCount}-word reflection capturing a personal moment and thoughts.`;
-  } else if (wordCount < 50) {
-    return `A thoughtful ${wordCount}-word recording sharing personal insights and experiences.`;
-  } else {
-    return `A detailed ${wordCount}-word memory capturing important thoughts, feelings, and experiences worth remembering.`;
-  }
-};
-
-const generatePoem = (transcript, emotion, keywords) => {
-  const poemTemplates = {
-    happy: [
-      'Sunshine fills the air today,\nJoy dances in every way,\nMemories bright and spirits high,\nHappiness that will never die.',
-      'Laughter echoes through the heart,\nJoyful moments, a perfect start,\nBrightness shines in every thought,\nHappiness that can\'t be bought.'
-    ],
-    sad: [
-      'Gentle tears like morning dew,\nReflections deep and feelings true,\nIn quiet moments, hearts can mend,\nSorrow\'s journey finds its end.',
-      'Melancholy whispers soft,\nMemories held up aloft,\nThrough the sadness, wisdom grows,\nPeace within the heart still flows.'
-    ],
-    calm: [
-      'Stillness settles on the soul,\nPeaceful thoughts make spirits whole,\nQuiet moments, gentle breeze,\nTranquil heart finds perfect ease.',
-      'Serenity flows like a stream,\nCalm reflections, peaceful dream,\nIn the silence, truth is found,\nPeace and quiet all around.'
-    ],
-    neutral: [
-      'Thoughts and words flow like a stream,\nCapturing life\'s daily theme,\nMemories stored for days ahead,\nVoices heard and stories said.',
-      'Simple moments, simply shared,\nDaily thoughts and feelings bared,\nIn these words, a life unfolds,\nStories that deserve be told.'
-    ]
-  };
-  
-  const templates = poemTemplates[emotion] || poemTemplates.neutral;
-  return templates[Math.floor(Math.random() * templates.length)];
-};
-
-/**
- * Search memories using AI-enhanced search
+ * Enhanced search with AI
  */
 export const searchMemoriesWithAI = async (query, userId) => {
   try {
-    const { data, error } = await supabase
-      .from('memories')
-      .select('*')
-      .eq('user_id', userId)
-      .or(`title.ilike.%${query}%,summary.ilike.%${query}%,transcript.ilike.%${query}%`)
-      .order('created_at', { ascending: false });
+    // First get all user memories
+    const { data: memories, error } = await supabase
+      .from("memories")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
 
-    return data || [];
+    // Use AI for semantic search
+    const results = await openAISearchMemories(query, memories || []);
+    return results;
   } catch (error) {
-    console.error('Error searching memories:', error);
-    throw error;
+    console.error("Error in AI search:", error);
+    // Fallback to basic search
+    const { data, error: searchError } = await supabase
+      .from("memories")
+      .select("*")
+      .eq("user_id", userId)
+      .or(
+        `title.ilike.%${query}%,summary.ilike.%${query}%,transcript.ilike.%${query}%`
+      )
+      .order("created_at", { ascending: false });
+
+    if (searchError) throw searchError;
+    return data || [];
   }
+};
+
+/**
+ * Analyze sentiment trends over time
+ */
+export const analyzeSentimentTrends = async (userId, timeframe = "30d") => {
+  try {
+    const { data: memories, error } = await supabase
+      .from("memories")
+      .select("sentiment, created_at")
+      .eq("user_id", userId)
+      .gte("created_at", getTimeframeDate(timeframe))
+      .order("created_at", { ascending: true });
+
+    if (error) throw error;
+
+    // Group by date and calculate sentiment scores
+    const trends = groupSentimentByDate(memories || []);
+    return trends;
+  } catch (error) {
+    console.error("Error analyzing sentiment trends:", error);
+    return [];
+  }
+};
+
+/**
+ * Get productivity insights
+ */
+export const getProductivityInsights = async (userId) => {
+  try {
+    const { data: memories, error } = await supabase
+      .from("memories")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("created_at", getTimeframeDate("7d"));
+
+    if (error) throw error;
+
+    const insights = {
+      totalMemories: memories.length,
+      actionItems: memories.reduce(
+        (sum, m) => sum + (m.action_items?.length || 0),
+        0
+      ),
+      categories: getCategoryDistribution(memories),
+      priorities: getPriorityDistribution(memories),
+      completionRate: calculateCompletionRate(memories),
+    };
+
+    return insights;
+  } catch (error) {
+    console.error("Error getting productivity insights:", error);
+    return null;
+  }
+};
+
+/**
+ * Utility functions
+ */
+const getTimeframeDate = (timeframe) => {
+  const now = new Date();
+  const days = parseInt(timeframe.replace("d", ""));
+  return new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+};
+
+const groupSentimentByDate = (memories) => {
+  const groups = {};
+
+  memories.forEach((memory) => {
+    const date = new Date(memory.created_at).toDateString();
+    if (!groups[date]) {
+      groups[date] = { positive: 0, neutral: 0, negative: 0, total: 0 };
+    }
+
+    groups[date][memory.sentiment || "neutral"]++;
+    groups[date].total++;
+  });
+
+  return Object.entries(groups).map(([date, counts]) => ({
+    date,
+    ...counts,
+    positiveRatio: counts.positive / counts.total,
+    negativeRatio: counts.negative / counts.total,
+  }));
+};
+
+const getCategoryDistribution = (memories) => {
+  const distribution = {};
+  memories.forEach((memory) => {
+    const category = memory.category || "general";
+    distribution[category] = (distribution[category] || 0) + 1;
+  });
+  return distribution;
+};
+
+const getPriorityDistribution = (memories) => {
+  const distribution = {};
+  memories.forEach((memory) => {
+    const priority = memory.priority || "medium";
+    distribution[priority] = (distribution[priority] || 0) + 1;
+  });
+  return distribution;
+};
+
+const calculateCompletionRate = (memories) => {
+  const withActionItems = memories.filter((m) => m.action_items?.length > 0);
+  const completed = withActionItems.filter(
+    (m) => m.completion_status === "completed"
+  );
+  return withActionItems.length > 0
+    ? completed.length / withActionItems.length
+    : 0;
 };

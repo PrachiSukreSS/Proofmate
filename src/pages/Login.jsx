@@ -1,7 +1,18 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../utils/supabaseClient";
 import { useNavigate } from "react-router-dom";
-import { Mic, Mail, Lock, User, ArrowRight, Eye, EyeOff, Shield, Zap, Clock } from "lucide-react";
+import {
+  Mic,
+  Mail,
+  Lock,
+  User,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Shield,
+  Zap,
+  Clock,
+} from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,7 +26,9 @@ const Login = () => {
   useEffect(() => {
     // Check if user is already logged in
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         navigate("/");
       }
@@ -69,24 +82,23 @@ const Login = () => {
     {
       icon: Zap,
       title: "Voice-to-Text Recording",
-      description: "Advanced speech recognition with AI analysis"
+      description: "Advanced speech recognition with AI analysis",
     },
     {
       icon: Shield,
       title: "Blockchain Verification",
-      description: "Cryptographic security for memory integrity"
+      description: "Cryptographic security for memory integrity",
     },
     {
       icon: Clock,
       title: "Timeline Organization",
-      description: "Organize and search your memories effortlessly"
-    }
+      description: "Organize and search your memories effortlessly",
+    },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-indigo-50 to-purple-200 flex items-center justify-center p-4">
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-        
         {/* Left Side - Branding & Features */}
         <div className="space-y-8 text-center lg:text-left">
           <div className="space-y-4">
@@ -102,7 +114,8 @@ const Login = () => {
               Your Professional Recording Companion
             </h2>
             <p className="text-lg text-slate-600 max-w-md mx-auto lg:mx-0">
-              Capture, verify, and organize your memories with blockchain-secured voice recording technology.
+              Capture, verify, and organize your memories with
+              blockchain-secured voice recording technology.
             </p>
           </div>
 
@@ -111,14 +124,21 @@ const Login = () => {
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div key={index} className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-purple-200">
+                <div
+                  key={index}
+                  className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-purple-200"
+                >
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-purple-100 rounded-lg">
                       <Icon className="h-5 w-5 text-purple-600" />
                     </div>
                     <div className="text-left">
-                      <h3 className="font-semibold text-slate-800 text-sm">{feature.title}</h3>
-                      <p className="text-xs text-slate-600 mt-1">{feature.description}</p>
+                      <h3 className="font-semibold text-slate-800 text-sm">
+                        {feature.title}
+                      </h3>
+                      <p className="text-xs text-slate-600 mt-1">
+                        {feature.description}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -140,10 +160,9 @@ const Login = () => {
                   {isLogin ? "Welcome Back!" : "Create Account"}
                 </h3>
                 <p className="text-slate-600 mt-2">
-                  {isLogin 
-                    ? "Sign in to access your secure memories" 
-                    : "Join ProofMate to start recording"
-                  }
+                  {isLogin
+                    ? "Sign in to access your secure memories"
+                    : "Join ProofMate to start recording"}
                 </p>
               </div>
             </div>
@@ -189,7 +208,11 @@ const Login = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -217,11 +240,13 @@ const Login = () => {
 
               {/* Message */}
               {message && (
-                <div className={`p-3 rounded-lg text-sm text-center ${
-                  message.includes("error") || message.includes("Error")
-                    ? "bg-red-100 text-red-700 border border-red-200"
-                    : "bg-green-100 text-green-700 border border-green-200"
-                }`}>
+                <div
+                  className={`p-3 rounded-lg text-sm text-center ${
+                    message.includes("error") || message.includes("Error")
+                      ? "bg-red-100 text-red-700 border border-red-200"
+                      : "bg-green-100 text-green-700 border border-green-200"
+                  }`}
+                >
                   {message}
                 </div>
               )}
@@ -236,10 +261,9 @@ const Login = () => {
                   }}
                   className="text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200"
                 >
-                  {isLogin 
-                    ? "Don't have an account? Sign up" 
-                    : "Already have an account? Sign in"
-                  }
+                  {isLogin
+                    ? "Don't have an account? Sign up"
+                    : "Already have an account? Sign in"}
                 </button>
               </div>
             </form>
@@ -250,7 +274,9 @@ const Login = () => {
             <div className="bg-white/50 backdrop-blur-sm rounded-xl p-4 border border-purple-200">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Shield className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium text-slate-700">Secure & Private</span>
+                <span className="text-sm font-medium text-slate-700">
+                  Secure & Private
+                </span>
               </div>
               <p className="text-xs text-slate-600">
                 Your data is encrypted and secured with blockchain verification

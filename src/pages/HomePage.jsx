@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { Mic, Zap, Shield, Clock, ArrowRight, LogIn } from "lucide-react";
+import {
+  Mic,
+  Zap,
+  Shield,
+  Clock,
+  ArrowRight,
+  LogIn,
+  Brain,
+  Target,
+  BarChart3,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import RecordMemory from "../components/RecordMemory";
 import { supabase } from "../utils/supabaseClient";
@@ -28,10 +38,16 @@ const HomePage = ({ user }) => {
 
   const features = [
     {
-      icon: Zap,
-      title: "Instant Recording",
+      icon: Brain,
+      title: "AI-Powered Analysis",
       description:
-        "Start recording with a single click and capture your thoughts instantly",
+        "Advanced OpenAI integration extracts actionable tasks and insights from your voice",
+    },
+    {
+      icon: Target,
+      title: "Smart Task Extraction",
+      description:
+        "Automatically identifies action items, priorities, and deadlines from your recordings",
     },
     {
       icon: Shield,
@@ -40,10 +56,22 @@ const HomePage = ({ user }) => {
         "Your recordings are cryptographically secured and verified on blockchain",
     },
     {
-      icon: Clock,
-      title: "Timeline View",
+      icon: BarChart3,
+      title: "Productivity Insights",
       description:
-        "Organize and browse your recordings with our intuitive timeline",
+        "Track your productivity trends and get insights into your task completion patterns",
+    },
+    {
+      icon: Zap,
+      title: "Instant Integration",
+      description:
+        "Export tasks directly to Google Calendar, Todoist, and other productivity tools",
+    },
+    {
+      icon: Clock,
+      title: "Smart Organization",
+      description:
+        "Intelligent categorization and tagging helps you find and manage your memories",
     },
   ];
 
@@ -62,10 +90,24 @@ const HomePage = ({ user }) => {
           >
             ProofMate
           </h1>
-          <p className="text-xl md:text-2xl text-slate-700 max-w-2xl mx-auto leading-relaxed">
-            Your professional recording companion for capturing ideas, meetings,
-            and memories with blockchain verification
+          <p className="text-xl md:text-2xl text-slate-700 max-w-3xl mx-auto leading-relaxed">
+            Transform your voice into actionable insights with AI-powered task
+            extraction, smart organization, and blockchain verification
           </p>
+          <div className="flex items-center justify-center gap-4 text-sm text-slate-600 mt-4">
+            <div className="flex items-center gap-1">
+              <Brain className="h-4 w-4 text-purple-500" />
+              <span>OpenAI Powered</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Target className="h-4 w-4 text-blue-500" />
+              <span>Task Extraction</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Shield className="h-4 w-4 text-green-500" />
+              <span>Blockchain Verified</span>
+            </div>
+          </div>
         </div>
 
         {/* Main Action Button */}
@@ -91,14 +133,15 @@ const HomePage = ({ user }) => {
                 <div className="relative flex items-center gap-3 text-white">
                   <Mic className="h-8 w-8" />
                   <span className="text-xl font-semibold">
-                    {user ? "🎙 Start Recording" : "🎙 Login to Record"}
+                    {user ? "🎙 Start Smart Recording" : "🎙 Login to Record"}
                   </span>
                 </div>
               </button>
-              
+
               {!user && (
                 <p className="text-slate-600 text-sm">
-                  Please log in to start recording your memories
+                  Please log in to start recording and extracting actionable
+                  insights
                 </p>
               )}
             </div>
@@ -123,15 +166,16 @@ const HomePage = ({ user }) => {
                   letterSpacing: "-0.02em",
                 }}
               >
-                Everything you need to record professionally
+                AI-Powered Productivity at Your Fingertips
               </h2>
-              <p className="text-lg text-slate-700 max-w-2xl mx-auto">
-                ProofMate combines powerful recording technology with blockchain verification
-                to make capturing audio secure and verifiable
+              <p className="text-lg text-slate-700 max-w-3xl mx-auto">
+                ProofMate uses advanced OpenAI technology to transform your
+                voice recordings into organized, actionable tasks with
+                intelligent insights and seamless integrations
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {features.map((feature, index) => {
                 const Icon = feature.icon;
                 return (
@@ -156,6 +200,66 @@ const HomePage = ({ user }) => {
             </div>
           </div>
 
+          {/* Demo Section */}
+          <div className="bg-gradient-to-r from-slate-50 to-purple-50 rounded-3xl p-8 md:p-12">
+            <div className="text-center space-y-6">
+              <h2
+                className="text-3xl md:text-4xl font-bold text-slate-800"
+                style={{
+                  fontFamily: '"Nunito", "Inter", system-ui, sans-serif',
+                  fontWeight: "800",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                See ProofMate in Action
+              </h2>
+              <div className="max-w-4xl mx-auto">
+                <div className="bg-white rounded-2xl p-6 shadow-lg border border-purple-200">
+                  <div className="grid md:grid-cols-2 gap-6 items-center">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-slate-800">
+                        🎤 Voice Input Example:
+                      </h3>
+                      <div className="bg-slate-50 p-4 rounded-lg border-l-4 border-purple-500">
+                        <p className="text-slate-700 italic">
+                          "I need to buy cat food for Lucy tomorrow, and don't
+                          forget to call the vet about her checkup. Also,
+                          schedule a meeting with the marketing team for next
+                          week."
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-slate-800">
+                        🧠 AI-Extracted Tasks:
+                      </h3>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          <span className="text-slate-700">
+                            Buy cat food for Lucy (High Priority)
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                          <span className="text-slate-700">
+                            Call vet about Lucy's checkup
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-slate-700">
+                            Schedule marketing team meeting
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* CTA Section */}
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl p-8 md:p-12 text-center text-white shadow-2xl">
             <div className="space-y-6">
@@ -167,11 +271,11 @@ const HomePage = ({ user }) => {
                   letterSpacing: "-0.02em",
                 }}
               >
-                Ready to get started?
+                Ready to supercharge your productivity?
               </h2>
               <p className="text-xl opacity-90 max-w-2xl mx-auto">
-                Join thousands of professionals who trust ProofMate for their
-                secure recording needs
+                Join the future of voice-powered task management with AI
+                insights, blockchain security, and seamless integrations
               </p>
               {user ? (
                 <button
