@@ -8,11 +8,9 @@ import {
   User,
   Minimize2,
   Maximize2,
-  Settings,
   Volume2,
   VolumeX,
   RefreshCw,
-  Sparkles,
   Brain,
   Shield,
   Zap,
@@ -21,9 +19,9 @@ import {
   Target,
   Mic,
   MicOff,
-  Heart,
   Star,
-  Coffee
+  Coffee,
+  Settings
 } from 'lucide-react';
 import { useToast } from '../../hooks/use-toast';
 
@@ -34,7 +32,7 @@ const ChatbotAssistant = ({ user }) => {
     {
       id: 1,
       type: 'bot',
-      content: "Hi there! 🌟 I'm your friendly TruthGuard assistant! I'm here to help you navigate our platform, answer questions, and make your verification journey smooth and enjoyable. What would you like to explore today?",
+      content: "Hello! I'm your TruthGuard AI assistant. I can help you with verification processes, explain features, troubleshoot issues, and guide you through our platform. How can I assist you today?",
       timestamp: new Date(),
       avatar: '🤖'
     }
@@ -42,79 +40,52 @@ const ChatbotAssistant = ({ user }) => {
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [personality, setPersonality] = useState('friendly');
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [mood, setMood] = useState('happy');
+  const [conversationContext, setConversationContext] = useState([]);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
   const { toast } = useToast();
 
-  const personalities = {
-    friendly: {
-      name: 'Friendly',
-      avatar: '😊',
-      description: 'Warm and helpful companion',
-      color: 'from-pink-400 to-purple-500',
-      mood: 'cheerful'
-    },
-    professional: {
-      name: 'Professional',
-      avatar: '🤖',
-      description: 'Efficient and precise',
-      color: 'from-blue-400 to-indigo-500',
-      mood: 'focused'
-    },
-    expert: {
-      name: 'Expert',
-      avatar: '🧠',
-      description: 'Technical specialist',
-      color: 'from-purple-400 to-pink-500',
-      mood: 'analytical'
-    },
-    casual: {
-      name: 'Casual',
-      avatar: '😎',
-      description: 'Relaxed and easy-going',
-      color: 'from-green-400 to-blue-500',
-      mood: 'chill'
-    }
-  };
-
   const quickActions = [
     {
       icon: Shield,
-      label: 'Verification Guide',
-      message: 'How do I verify content step by step?',
-      emoji: '🛡️'
+      label: 'How to Verify',
+      message: 'How do I verify content on TruthGuard?',
+      category: 'verification'
     },
     {
       icon: Brain,
       label: 'AI Features',
       message: 'What AI features are available?',
-      emoji: '🧠'
+      category: 'features'
     },
     {
       icon: Zap,
       label: 'Quick Start',
-      message: 'I\'m new here, show me around!',
-      emoji: '⚡'
+      message: 'I\'m new here, show me how to get started',
+      category: 'onboarding'
     },
     {
       icon: HelpCircle,
-      label: 'Get Help',
-      message: 'I need help with something',
-      emoji: '❓'
+      label: 'Troubleshooting',
+      message: 'I\'m having technical issues',
+      category: 'support'
+    },
+    {
+      icon: BookOpen,
+      label: 'Documentation',
+      message: 'Where can I find detailed documentation?',
+      category: 'docs'
+    },
+    {
+      icon: Target,
+      label: 'Best Practices',
+      message: 'What are the best practices for verification?',
+      category: 'tips'
     }
   ];
-
-  const moods = {
-    happy: { emoji: '😊', color: 'text-yellow-500' },
-    excited: { emoji: '🤩', color: 'text-orange-500' },
-    helpful: { emoji: '🤗', color: 'text-green-500' },
-    thinking: { emoji: '🤔', color: 'text-blue-500' }
-  };
 
   useEffect(() => {
     scrollToBottom();
@@ -141,92 +112,104 @@ const ChatbotAssistant = ({ user }) => {
   const generateBotResponse = async (userMessage) => {
     setIsTyping(true);
     setIsProcessing(true);
-    setMood('thinking');
     
     try {
+      // Add to conversation context
+      setConversationContext(prev => [...prev.slice(-4), userMessage]);
+      
       // Simulate AI processing delay
-      await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1500));
       
       const responses = {
         verification: [
-          "Great question! 🎯 To verify content, just head to our Verify page and upload your file. Our AI will analyze it for authenticity, check for deepfakes, and provide a detailed confidence score. It's super easy!",
-          "I'd love to help you with verification! ✨ Our system supports videos, audio, images, and documents. Just drag and drop your file, and we'll handle the rest with our advanced AI analysis.",
-          "Verification is our specialty! 🔍 Upload your content, choose your analysis type, and our AI will check for manipulation, bias, and authenticity. You'll get results in under a minute!"
+          "To verify content on TruthGuard: 1) Go to the Verify page, 2) Upload your file (video, audio, image, or document), 3) Select analysis type, 4) Wait for AI processing, 5) Review detailed results with confidence scores and recommendations.",
+          "Our verification process uses multiple AI models: GPT-4 for content analysis, specialized deepfake detection for videos, voice authentication for audio, and blockchain verification for tamper-proof results.",
+          "You can verify various content types: videos (deepfake detection), audio files (voice authentication), documents (fact-checking), and images (manipulation detection). Each gets tailored analysis."
         ],
-        ai: [
-          "Our AI is pretty amazing! 🤖 We use GPT-4 for content analysis, specialized models for deepfake detection, and blockchain verification for tamper-proof results. It's like having a team of experts in your pocket!",
-          "The AI confidence score shows how certain we are about authenticity! 📊 90%+ means high confidence, 70-90% suggests caution, and below 70% needs human review. We're transparent about our certainty!",
-          "Our AI learns from millions of examples! 🧠 It can spot subtle manipulation patterns, analyze emotional tone, detect inconsistencies, and even check factual claims against reliable sources."
+        features: [
+          "TruthGuard offers: Advanced AI analysis with confidence scores, blockchain verification for immutable proof, real-time processing, detailed reporting, API access, and integration with popular tools.",
+          "Our AI features include: Content authenticity scoring, bias detection, fact-checking against reliable sources, emotional manipulation analysis, and technical authenticity markers.",
+          "Key capabilities: Multi-modal analysis (video/audio/text/image), real-time processing, exportable reports, API integration, webhook support, and comprehensive analytics dashboard."
         ],
-        guide: [
-          "Welcome aboard! 🚀 Let me show you around: Start with Dashboard to see your overview, try Verify to upload content, check Analytics for insights, and explore Subscription for advanced features. You've got this!",
-          "New to TruthGuard? Perfect! 🌟 Think of us as your truth-detection toolkit. Upload suspicious content, get AI analysis, view detailed reports, and export findings. It's designed to be intuitive and powerful!",
-          "I'm excited to help you get started! 🎉 Begin with a test verification to see how it works, explore your dashboard for insights, and don't hesitate to ask me anything. I'm here to make your experience smooth!"
+        onboarding: [
+          "Welcome to TruthGuard! Here's how to start: 1) Create your account, 2) Try the demo verification, 3) Explore the dashboard, 4) Upload your first content for analysis, 5) Review the detailed results and reports.",
+          "Getting started is easy: Begin with our guided tour, try a sample verification to understand the process, check your dashboard for analytics, and explore subscription options for advanced features.",
+          "New user guide: Start with the verification demo, familiarize yourself with the interface, understand confidence scores, learn about different analysis types, and explore export options."
         ],
-        help: [
-          "I'm here to help! 💪 What specific challenge are you facing? Whether it's uploading files, understanding results, or navigating features, I'll guide you through it step by step.",
-          "No worries, we'll figure this out together! 🤝 Tell me what's not working as expected, and I'll provide clear solutions. Sometimes it's just a small setting or browser issue.",
-          "Help is on the way! 🆘 I can assist with technical issues, explain features, guide you through processes, or connect you with our support team for complex problems."
+        support: [
+          "For technical issues: 1) Check your internet connection, 2) Ensure file formats are supported (MP4, MP3, PDF, JPG, etc.), 3) Verify file size limits, 4) Clear browser cache, 5) Try a different browser if needed.",
+          "Common solutions: Refresh the page, check file format compatibility, ensure stable internet, verify account permissions, and contact support if issues persist.",
+          "Troubleshooting steps: Confirm file requirements, check browser compatibility, verify account status, test with smaller files, and use our status page for system updates."
+        ],
+        docs: [
+          "Documentation is available in the Help section: User guides, API documentation, integration tutorials, troubleshooting guides, and video walkthroughs for all features.",
+          "Find comprehensive docs at: Getting Started guide, API reference with examples, integration tutorials, best practices guide, and FAQ section with common questions.",
+          "Access documentation through: Main menu Help section, in-app tooltips and guides, video tutorials, API documentation portal, and community forums for user discussions."
+        ],
+        tips: [
+          "Best practices: 1) Use high-quality, uncompressed files, 2) Provide context about content source, 3) Cross-reference with multiple sources, 4) Review flagged items manually, 5) Keep verification history organized.",
+          "For optimal results: Upload original files when possible, use clear audio/video quality, provide relevant metadata, understand confidence score meanings, and maintain verification records.",
+          "Pro tips: Higher resolution yields better analysis, original files are more accurate than compressed ones, context helps interpretation, and regular verification builds trust patterns."
         ],
         default: [
-          "That's an interesting question! 🤔 I'm here to help with anything TruthGuard-related. Feel free to ask about verification, features, troubleshooting, or just chat about how our platform can help you!",
-          "I love helping users explore TruthGuard! ✨ Whether you need technical guidance, want to understand our AI, or just want to chat about digital truth verification, I'm your friendly assistant!",
-          "Thanks for reaching out! 😊 I'm designed to make your TruthGuard experience amazing. Ask me anything about our platform, and I'll do my best to provide helpful, clear answers!"
+          "I'm here to help with TruthGuard! I can assist with verification processes, explain features, troubleshoot issues, guide you through the platform, or answer questions about our AI capabilities.",
+          "I can help you with: Content verification guidance, feature explanations, technical support, best practices, API documentation, and general platform navigation. What specific area interests you?",
+          "Feel free to ask about: How verification works, understanding results, troubleshooting issues, feature capabilities, integration options, or any other TruthGuard-related questions."
         ]
       };
 
-      // Enhanced keyword matching
+      // Enhanced keyword matching with context awareness
       const lowerMessage = userMessage.toLowerCase();
       let responseCategory = 'default';
       
-      if (lowerMessage.includes('verify') || lowerMessage.includes('upload') || lowerMessage.includes('check')) {
+      if (lowerMessage.includes('verify') || lowerMessage.includes('upload') || lowerMessage.includes('check') || lowerMessage.includes('analyze')) {
         responseCategory = 'verification';
-      } else if (lowerMessage.includes('ai') || lowerMessage.includes('analysis') || lowerMessage.includes('confidence')) {
-        responseCategory = 'ai';
-      } else if (lowerMessage.includes('guide') || lowerMessage.includes('start') || lowerMessage.includes('new') || lowerMessage.includes('how')) {
-        responseCategory = 'guide';
-      } else if (lowerMessage.includes('help') || lowerMessage.includes('problem') || lowerMessage.includes('issue') || lowerMessage.includes('trouble')) {
-        responseCategory = 'help';
+      } else if (lowerMessage.includes('feature') || lowerMessage.includes('ai') || lowerMessage.includes('capability') || lowerMessage.includes('what can')) {
+        responseCategory = 'features';
+      } else if (lowerMessage.includes('start') || lowerMessage.includes('begin') || lowerMessage.includes('new') || lowerMessage.includes('guide') || lowerMessage.includes('tutorial')) {
+        responseCategory = 'onboarding';
+      } else if (lowerMessage.includes('problem') || lowerMessage.includes('issue') || lowerMessage.includes('error') || lowerMessage.includes('trouble') || lowerMessage.includes('help') || lowerMessage.includes('fix')) {
+        responseCategory = 'support';
+      } else if (lowerMessage.includes('documentation') || lowerMessage.includes('docs') || lowerMessage.includes('manual') || lowerMessage.includes('api') || lowerMessage.includes('reference')) {
+        responseCategory = 'docs';
+      } else if (lowerMessage.includes('best') || lowerMessage.includes('practice') || lowerMessage.includes('tip') || lowerMessage.includes('recommend') || lowerMessage.includes('optimize')) {
+        responseCategory = 'tips';
       }
 
       const categoryResponses = responses[responseCategory];
       const response = categoryResponses[Math.floor(Math.random() * categoryResponses.length)];
-      
-      setMood('helpful');
       
       const botMessage = {
         id: Date.now(),
         type: 'bot',
         content: response,
         timestamp: new Date(),
-        avatar: personalities[personality].avatar
+        avatar: '🤖'
       };
       
       setMessages(prev => [...prev, botMessage]);
 
       // Text-to-speech if enabled
       if (voiceEnabled && 'speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(response.replace(/[🎯✨🔍🤖📊🧠🚀🌟🎉💪🤝🆘🤔😊]/g, ''));
+        const utterance = new SpeechSynthesisUtterance(response);
         utterance.rate = 0.9;
-        utterance.pitch = 1.1;
+        utterance.pitch = 1;
         speechSynthesis.speak(utterance);
       }
 
     } catch (error) {
       console.error('Error generating response:', error);
-      setMood('helpful');
       const errorMessage = {
         id: Date.now(),
         type: 'bot',
-        content: "Oops! 😅 I'm having a tiny technical hiccup. Could you try asking again? I promise I'll do better!",
+        content: "I apologize, but I'm experiencing a technical issue. Please try asking your question again, or contact our support team if the problem persists.",
         timestamp: new Date(),
-        avatar: personalities[personality].avatar
+        avatar: '🤖'
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
       setIsProcessing(false);
-      setTimeout(() => setMood('happy'), 2000);
     }
   };
 
@@ -269,27 +252,30 @@ const ChatbotAssistant = ({ user }) => {
       
       recognitionRef.current.onstart = () => {
         setIsListening(true);
-        setMood('excited');
       };
       
       recognitionRef.current.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         setInputMessage(transcript);
         setIsListening(false);
-        setMood('happy');
       };
       
       recognitionRef.current.onerror = (event) => {
         setIsListening(false);
-        setMood('happy');
+        console.error('Speech recognition error:', event.error);
       };
       
       recognitionRef.current.onend = () => {
         setIsListening(false);
-        setMood('happy');
       };
       
       recognitionRef.current.start();
+    } else {
+      toast({
+        title: "Voice input not supported",
+        description: "Your browser doesn't support voice input",
+        variant: "destructive"
+      });
     }
   };
 
@@ -297,7 +283,6 @@ const ChatbotAssistant = ({ user }) => {
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
       setIsListening(false);
-      setMood('happy');
     }
   };
 
@@ -306,33 +291,56 @@ const ChatbotAssistant = ({ user }) => {
       {
         id: 1,
         type: 'bot',
-        content: "Fresh start! 🌟 I'm ready to help you with anything TruthGuard-related. What would you like to explore?",
+        content: "Chat cleared! I'm ready to help you with any TruthGuard questions or guidance you need.",
         timestamp: new Date(),
-        avatar: personalities[personality].avatar
+        avatar: '🤖'
       }
     ]);
-    setMood('happy');
+    setConversationContext([]);
+  };
+
+  const exportChat = () => {
+    const chatData = {
+      messages,
+      timestamp: new Date().toISOString(),
+      user: user?.email || 'Anonymous'
+    };
+    
+    const dataStr = JSON.stringify(chatData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `truthguard-chat-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Chat Exported",
+      description: "Your conversation has been saved",
+      variant: "success"
+    });
   };
 
   if (!isOpen) {
     return (
       <motion.button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-16 h-16 glassmorphic hover:scale-110 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
-        whileHover={{ scale: 1.1, rotate: 5 }}
+        className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
+        whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
         aria-label="Open AI Assistant"
       >
-        <MessageCircle className="h-8 w-8 text-primary-600 group-hover:scale-110 transition-transform" />
+        <MessageCircle className="h-8 w-8 text-white group-hover:scale-110 transition-transform" />
         <motion.div
-          className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full flex items-center justify-center"
+          className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center"
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          <Heart className="h-2.5 w-2.5 text-white" />
+          <Bot className="h-2.5 w-2.5 text-white" />
         </motion.div>
       </motion.button>
     );
@@ -344,35 +352,30 @@ const ChatbotAssistant = ({ user }) => {
         isMinimized 
           ? 'bottom-6 right-6 w-80 h-16' 
           : 'bottom-6 right-6 w-96 h-[600px]'
-      } glassmorphic rounded-2xl shadow-2xl overflow-hidden`}
+      } glassmorphic rounded-2xl shadow-2xl overflow-hidden border border-white/20`}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
     >
       {/* Header - Always visible */}
-      <div className={`bg-gradient-to-r ${personalities[personality].color} p-4 flex items-center justify-between`}>
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <motion.div 
             className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
             animate={{ rotate: isProcessing ? 360 : 0 }}
             transition={{ duration: 2, repeat: isProcessing ? Infinity : 0 }}
           >
-            <span className="text-xl">{personalities[personality].avatar}</span>
+            <Bot className="h-5 w-5 text-white" />
           </motion.div>
           {!isMinimized && (
             <div className="text-white">
-              <h3 className="font-semibold flex items-center gap-2">
-                TruthGuard Assistant
-                <span className={moods[mood].color}>{moods[mood].emoji}</span>
-              </h3>
-              <p className="text-xs opacity-90">{personalities[personality].description}</p>
+              <h3 className="font-semibold">TruthGuard Assistant</h3>
+              <p className="text-xs opacity-90">AI-powered help & guidance</p>
             </div>
           )}
           {isMinimized && (
             <div className="text-white">
-              <h3 className="font-semibold text-sm flex items-center gap-2">
-                Assistant <span className="text-lg">{moods[mood].emoji}</span>
-              </h3>
+              <h3 className="font-semibold text-sm">AI Assistant</h3>
             </div>
           )}
         </div>
@@ -407,31 +410,33 @@ const ChatbotAssistant = ({ user }) => {
       {!isMinimized && (
         <>
           {/* Settings Bar */}
-          <div className="p-3 glassmorphic border-b border-white/10">
+          <div className="p-3 bg-white/5 border-b border-white/10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <select
-                  value={personality}
-                  onChange={(e) => setPersonality(e.target.value)}
-                  className="text-xs glassmorphic border border-white/20 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                >
-                  {Object.entries(personalities).map(([key, p]) => (
-                    <option key={key} value={key}>{p.name}</option>
-                  ))}
-                </select>
+                <span className="text-xs text-gray-300">
+                  {messages.length - 1} messages
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <motion.button
                   onClick={() => setVoiceEnabled(!voiceEnabled)}
-                  className={`p-1 rounded transition-colors ${voiceEnabled ? 'text-green-500' : 'text-gray-400'}`}
+                  className={`p-1 rounded transition-colors ${voiceEnabled ? 'text-green-400' : 'text-gray-400'}`}
                   whileHover={{ scale: 1.1 }}
                   title={voiceEnabled ? "Disable voice output" : "Enable voice output"}
                 >
                   {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
                 </motion.button>
                 <motion.button
+                  onClick={exportChat}
+                  className="p-1 text-gray-400 hover:text-gray-200 rounded transition-colors"
+                  whileHover={{ scale: 1.1 }}
+                  title="Export chat"
+                >
+                  <Settings className="h-4 w-4" />
+                </motion.button>
+                <motion.button
                   onClick={clearChat}
-                  className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                  className="p-1 text-gray-400 hover:text-gray-200 rounded transition-colors"
                   whileHover={{ scale: 1.1 }}
                   title="Clear chat"
                 >
@@ -453,23 +458,27 @@ const ChatbotAssistant = ({ user }) => {
                   className={`flex gap-3 ${message.type === 'user' ? 'flex-row-reverse' : ''}`}
                 >
                   <motion.div 
-                    className="w-8 h-8 rounded-full glassmorphic flex items-center justify-center flex-shrink-0"
+                    className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0"
                     whileHover={{ scale: 1.1 }}
                   >
-                    <span className="text-sm">{message.avatar}</span>
+                    {message.type === 'bot' ? (
+                      <Bot className="h-4 w-4 text-blue-400" />
+                    ) : (
+                      <User className="h-4 w-4 text-purple-400" />
+                    )}
                   </motion.div>
                   <div className={`max-w-[80%] ${message.type === 'user' ? 'text-right' : ''}`}>
                     <motion.div 
                       className={`p-3 rounded-2xl ${
                         message.type === 'user'
-                          ? 'bg-gradient-to-r from-primary-500 to-accent-500 text-white'
-                          : 'glassmorphic text-gray-800 dark:text-gray-200'
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                          : 'bg-white/10 text-gray-100 border border-white/20'
                       }`}
                       whileHover={{ scale: 1.02 }}
                     >
                       <p className="text-sm leading-relaxed">{message.content}</p>
                     </motion.div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-gray-400 mt-1">
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
@@ -483,23 +492,23 @@ const ChatbotAssistant = ({ user }) => {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex gap-3"
               >
-                <div className="w-8 h-8 rounded-full glassmorphic flex items-center justify-center">
-                  <span className="text-sm">{personalities[personality].avatar}</span>
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                  <Bot className="h-4 w-4 text-blue-400" />
                 </div>
-                <div className="glassmorphic p-3 rounded-2xl">
+                <div className="bg-white/10 p-3 rounded-2xl border border-white/20">
                   <div className="flex space-x-1">
                     <motion.div
-                      className="w-2 h-2 bg-primary-500 rounded-full"
+                      className="w-2 h-2 bg-blue-400 rounded-full"
                       animate={{ scale: [1, 1.5, 1] }}
                       transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
                     />
                     <motion.div
-                      className="w-2 h-2 bg-primary-500 rounded-full"
+                      className="w-2 h-2 bg-blue-400 rounded-full"
                       animate={{ scale: [1, 1.5, 1] }}
                       transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
                     />
                     <motion.div
-                      className="w-2 h-2 bg-primary-500 rounded-full"
+                      className="w-2 h-2 bg-blue-400 rounded-full"
                       animate={{ scale: [1, 1.5, 1] }}
                       transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
                     />
@@ -513,19 +522,19 @@ const ChatbotAssistant = ({ user }) => {
           {/* Quick Actions */}
           <div className="p-3 border-t border-white/10">
             <div className="grid grid-cols-2 gap-2 mb-3">
-              {quickActions.map((action, index) => {
+              {quickActions.slice(0, 4).map((action, index) => {
                 const Icon = action.icon;
                 return (
                   <motion.button
                     key={index}
                     onClick={() => handleQuickAction(action)}
                     disabled={isProcessing}
-                    className="flex items-center gap-2 p-2 text-xs glassmorphic hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 p-2 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <span className="text-sm">{action.emoji}</span>
-                    <span className="truncate font-medium">{action.label}</span>
+                    <Icon className="h-3 w-3 text-blue-400" />
+                    <span className="truncate font-medium text-gray-200">{action.label}</span>
                   </motion.button>
                 );
               })}
@@ -541,9 +550,9 @@ const ChatbotAssistant = ({ user }) => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && !isProcessing && handleSendMessage()}
-                placeholder="Type your message... 💬"
+                placeholder="Ask me anything about TruthGuard..."
                 disabled={isProcessing}
-                className="flex-1 px-3 py-2 glassmorphic border border-white/20 rounded-lg focus:ring-2 focus:ring-primary-400 focus:border-transparent text-sm disabled:opacity-50 placeholder-gray-500"
+                className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm disabled:opacity-50 placeholder-gray-400 text-white"
               />
               <motion.button
                 onClick={isListening ? stopVoiceInput : startVoiceInput}
@@ -551,8 +560,8 @@ const ChatbotAssistant = ({ user }) => {
                 className={`p-2 rounded-lg transition-colors ${
                   isListening 
                     ? 'bg-red-500 text-white hover:bg-red-600' 
-                    : 'glassmorphic hover:bg-white/20'
-                } disabled:opacity-50`}
+                    : 'bg-white/10 hover:bg-white/20 text-gray-300'
+                } disabled:opacity-50 border border-white/20`}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 title={isListening ? "Stop voice input" : "Start voice input"}
@@ -562,7 +571,7 @@ const ChatbotAssistant = ({ user }) => {
               <motion.button
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim() || isProcessing}
-                className="p-2 bg-gradient-to-r from-primary-500 to-accent-500 text-white rounded-lg hover:from-primary-600 hover:to-accent-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all border border-white/20"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 title="Send message"
