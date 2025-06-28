@@ -1,7 +1,7 @@
 {
-  "name": "proofmate",
+  "name": "truthguard",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,13 +11,19 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.1",
+    "@revenuecat/purchases-js": "^2.1.0",
+    "algosdk": "^2.7.0",
     "axios": "^1.10.0",
     "lucide-react": "^0.344.0",
     "openai": "^4.28.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.21.1",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "recharts": "^2.8.0",
+    "framer-motion": "^10.16.0",
+    "react-dropzone": "^14.2.3",
+    "date-fns": "^2.30.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",

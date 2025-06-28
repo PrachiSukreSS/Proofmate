@@ -1,304 +1,222 @@
-import React, { useEffect, useState } from "react";
-import {
-  Mic,
-  Zap,
-  Shield,
-  Clock,
-  ArrowRight,
-  LogIn,
-  Brain,
-  Target,
-  BarChart3,
-} from "lucide-react";
+import React from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import RecordMemory from "../components/RecordMemory";
-import { supabase } from "../utils/supabaseClient";
+import { 
+  Shield, 
+  Zap, 
+  Brain, 
+  Globe, 
+  ArrowRight, 
+  CheckCircle,
+  Video,
+  Mic,
+  FileText,
+  BarChart3
+} from "lucide-react";
 
 const HomePage = ({ user }) => {
-  const [showRecording, setShowRecording] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      console.log("👤 Authenticated User:", data?.user);
-    });
-  }, []);
-
-  const handleStartRecording = () => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    setShowRecording(true);
-  };
-
-  const handleLoginClick = () => {
-    navigate("/login");
-  };
 
   const features = [
     {
+      icon: Shield,
+      title: "Blockchain Verification",
+      description: "Immutable proof of authenticity using Algorand smart contracts",
+      color: "from-primary-500 to-primary-600"
+    },
+    {
       icon: Brain,
       title: "AI-Powered Analysis",
-      description:
-        "Advanced OpenAI integration extracts actionable tasks and insights from your voice",
+      description: "Advanced GPT-4 integration for intelligent fact-checking",
+      color: "from-accent-500 to-accent-600"
     },
     {
-      icon: Target,
-      title: "Smart Task Extraction",
-      description:
-        "Automatically identifies action items, priorities, and deadlines from your recordings",
+      icon: Video,
+      title: "Video Verification",
+      description: "Tavus AI integration for deepfake detection and video analysis",
+      color: "from-success-500 to-success-600"
     },
     {
-      icon: Shield,
-      title: "Blockchain Verified",
-      description:
-        "Your recordings are cryptographically secured and verified on blockchain",
+      icon: Mic,
+      title: "Voice Authentication",
+      description: "ElevenLabs voice signature verification and emotion detection",
+      color: "from-purple-500 to-purple-600"
+    },
+    {
+      icon: Globe,
+      title: "SDG Impact Tracking",
+      description: "Align your verification efforts with UN Sustainable Development Goals",
+      color: "from-blue-500 to-blue-600"
     },
     {
       icon: BarChart3,
-      title: "Productivity Insights",
-      description:
-        "Track your productivity trends and get insights into your task completion patterns",
-    },
-    {
-      icon: Zap,
-      title: "Instant Integration",
-      description:
-        "Export tasks directly to Google Calendar, Todoist, and other productivity tools",
-    },
-    {
-      icon: Clock,
-      title: "Smart Organization",
-      description:
-        "Intelligent categorization and tagging helps you find and manage your memories",
-    },
+      title: "Real-time Analytics",
+      description: "Comprehensive dashboards and automated impact reports",
+      color: "from-indigo-500 to-indigo-600"
+    }
+  ];
+
+  const stats = [
+    { label: "Verifications Processed", value: "1M+", icon: CheckCircle },
+    { label: "Accuracy Rate", value: "99.7%", icon: Shield },
+    { label: "Global Users", value: "50K+", icon: Globe },
+    { label: "SDG Impact Score", value: "8.9/10", icon: BarChart3 }
   ];
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex flex-col justify-center space-y-16">
+    <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="text-center space-y-8 py-12">
-        <div className="space-y-4">
-          <h1
-            className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent"
-            style={{
-              fontFamily: '"Nunito", "Inter", system-ui, sans-serif',
-              fontWeight: "800",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            ProofMate
-          </h1>
-          <p className="text-xl md:text-2xl text-slate-700 max-w-3xl mx-auto leading-relaxed">
-            Transform your voice into actionable insights with AI-powered task
-            extraction, smart organization, and blockchain verification
-          </p>
-          <div className="flex items-center justify-center gap-4 text-sm text-slate-600 mt-4">
-            <div className="flex items-center gap-1">
-              <Brain className="h-4 w-4 text-purple-500" />
-              <span>OpenAI Powered</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Target className="h-4 w-4 text-blue-500" />
-              <span>Task Extraction</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Shield className="h-4 w-4 text-green-500" />
-              <span>Blockchain Verified</span>
-            </div>
-          </div>
-        </div>
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-20">
+        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center space-y-8">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="space-y-6"
+            >
+              <h1 className="text-5xl md:text-7xl font-bold">
+                <span className="bg-gradient-to-r from-primary-600 via-accent-500 to-success-500 bg-clip-text text-transparent">
+                  Truth
+                </span>
+                <span className="text-gray-900 dark:text-white">Guard</span>
+              </h1>
+              <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                Revolutionary truth verification platform powered by AI, blockchain, and advanced analytics. 
+                Ensure data integrity and combat misinformation with cutting-edge technology.
+              </p>
+            </motion.div>
 
-        {/* Main Action Button */}
-        <div className="flex flex-col items-center gap-6">
-          {!showRecording ? (
-            <div className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            >
               <button
-                onClick={handleStartRecording}
-                className="group relative overflow-hidden rounded-full p-8 shadow-2xl transition-all duration-300 transform hover:scale-110 hover:shadow-purple-500/25 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-                style={{
-                  boxShadow:
-                    "0 25px 50px -12px rgba(147, 51, 234, 0.25), 0 0 30px rgba(147, 51, 234, 0.3)",
-                }}
+                onClick={() => navigate(user ? '/dashboard' : '/login')}
+                className="group bg-gradient-to-r from-primary-600 to-accent-500 hover:from-primary-700 hover:to-accent-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center gap-2"
               >
-                <div className="absolute inset-0 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div
-                  className="absolute inset-0 rounded-full animate-pulse opacity-0 group-hover:opacity-30 transition-opacity duration-300"
-                  style={{
-                    background:
-                      "radial-gradient(circle, rgba(147, 51, 234, 0.4) 0%, transparent 70%)",
-                  }}
-                />
-                <div className="relative flex items-center gap-3 text-white">
-                  <Mic className="h-8 w-8" />
-                  <span className="text-xl font-semibold">
-                    {user ? "🎙 Start Smart Recording" : "🎙 Login to Record"}
-                  </span>
-                </div>
+                {user ? 'Go to Dashboard' : 'Start Verification'}
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </button>
-
-              {!user && (
-                <p className="text-slate-600 text-sm">
-                  Please log in to start recording and extracting actionable
-                  insights
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="w-full max-w-6xl">
-              <RecordMemory onBack={() => setShowRecording(false)} />
-            </div>
-          )}
+              <button
+                onClick={() => navigate('/verify')}
+                className="px-8 py-4 border-2 border-primary-600 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-xl font-semibold text-lg transition-all duration-300"
+              >
+                Try Demo
+              </button>
+            </motion.div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Features Section - Only show when not recording */}
-      {!showRecording && (
-        <>
-          <div className="space-y-12">
-            <div className="text-center space-y-4">
-              <h2
-                className="text-3xl md:text-4xl font-bold text-slate-800"
-                style={{
-                  fontFamily: '"Nunito", "Inter", system-ui, sans-serif',
-                  fontWeight: "800",
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                AI-Powered Productivity at Your Fingertips
-              </h2>
-              <p className="text-lg text-slate-700 max-w-3xl mx-auto">
-                ProofMate uses advanced OpenAI technology to transform your
-                voice recordings into organized, actionable tasks with
-                intelligent insights and seamless integrations
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {features.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <div
-                    key={index}
-                    className="group bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-purple-200/50"
-                  >
-                    <div className="flex flex-col items-center text-center space-y-4">
-                      <div className="p-4 rounded-full bg-gradient-to-r from-purple-100 to-indigo-100 group-hover:from-purple-200 group-hover:to-indigo-200 transition-colors duration-300">
-                        <Icon className="h-8 w-8 text-purple-600" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-slate-800">
-                        {feature.title}
-                      </h3>
-                      <p className="text-slate-600 leading-relaxed">
-                        {feature.description}
-                      </p>
+      {/* Stats Section */}
+      <section className="py-16 bg-white dark:bg-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  className="text-center space-y-2"
+                >
+                  <div className="flex justify-center">
+                    <div className="p-3 bg-gradient-to-r from-primary-100 to-accent-100 dark:from-primary-900/20 dark:to-accent-900/20 rounded-full">
+                      <Icon className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Demo Section */}
-          <div className="bg-gradient-to-r from-slate-50 to-purple-50 rounded-3xl p-8 md:p-12">
-            <div className="text-center space-y-6">
-              <h2
-                className="text-3xl md:text-4xl font-bold text-slate-800"
-                style={{
-                  fontFamily: '"Nunito", "Inter", system-ui, sans-serif',
-                  fontWeight: "800",
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                See ProofMate in Action
-              </h2>
-              <div className="max-w-4xl mx-auto">
-                <div className="bg-white rounded-2xl p-6 shadow-lg border border-purple-200">
-                  <div className="grid md:grid-cols-2 gap-6 items-center">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-slate-800">
-                        🎤 Voice Input Example:
-                      </h3>
-                      <div className="bg-slate-50 p-4 rounded-lg border-l-4 border-purple-500">
-                        <p className="text-slate-700 italic">
-                          "I need to buy cat food for Lucy tomorrow, and don't
-                          forget to call the vet about her checkup. Also,
-                          schedule a meeting with the marketing team for next
-                          week."
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-slate-800">
-                        🧠 AI-Extracted Tasks:
-                      </h3>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                          <span className="text-slate-700">
-                            Buy cat food for Lucy (High Priority)
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                          <span className="text-slate-700">
-                            Call vet about Lucy's checkup
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          <span className="text-slate-700">
-                            Schedule marketing team meeting
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                    {stat.value}
                   </div>
-                </div>
-              </div>
-            </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    {stat.label}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center space-y-4 mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
+              Advanced Verification Technology
+            </h2>
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+              Comprehensive suite of AI-powered tools for truth verification and data integrity
+            </p>
           </div>
 
-          {/* CTA Section */}
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl p-8 md:p-12 text-center text-white shadow-2xl">
-            <div className="space-y-6">
-              <h2
-                className="text-3xl md:text-4xl font-bold"
-                style={{
-                  fontFamily: '"Nunito", "Inter", system-ui, sans-serif',
-                  fontWeight: "800",
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                Ready to supercharge your productivity?
-              </h2>
-              <p className="text-xl opacity-90 max-w-2xl mx-auto">
-                Join the future of voice-powered task management with AI
-                insights, blockchain security, and seamless integrations
-              </p>
-              {user ? (
-                <button
-                  onClick={handleStartRecording}
-                  className="group bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-slate-50 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2 mx-auto"
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  className="card p-8 hover:shadow-xl transition-all duration-300 group"
                 >
-                  Start Recording Now
-                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-                </button>
-              ) : (
-                <button
-                  onClick={handleLoginClick}
-                  className="group bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-slate-50 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2 mx-auto"
-                >
-                  <LogIn className="h-5 w-5" />
-                  Login to Get Started
-                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-                </button>
-              )}
-            </div>
+                  <div className="space-y-4">
+                    <div className={`w-12 h-12 bg-gradient-to-r ${feature.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className="h-6 w-6 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      {feature.description}
+                    </p>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
-        </>
-      )}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-primary-600 to-accent-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="space-y-8"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-white">
+              Ready to Verify Truth?
+            </h2>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto">
+              Join thousands of organizations using TruthGuard to ensure data integrity and combat misinformation
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => navigate(user ? '/dashboard' : '/login')}
+                className="bg-white text-primary-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-50 transition-all duration-300 transform hover:scale-105 shadow-lg"
+              >
+                Get Started Free
+              </button>
+              <button
+                onClick={() => navigate('/subscription')}
+                className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/10 transition-all duration-300"
+              >
+                View Pricing
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
     </div>
   );
 };
