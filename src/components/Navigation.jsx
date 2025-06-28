@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
-  Shield, 
+  Mic, 
   BarChart3, 
   User, 
   Menu, 
@@ -11,7 +11,8 @@ import {
   Moon,
   Sun,
   Home,
-  Search
+  Clock,
+  Target
 } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import { useTheme } from '../contexts/ThemeContext';
@@ -24,9 +25,9 @@ const Navigation = ({ user }) => {
 
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
-    { path: '/dashboard', label: 'Dashboard', icon: BarChart3 },
-    { path: '/verify', label: 'Verify', icon: Shield },
-    { path: '/analytics', label: 'Analytics', icon: Search },
+    { path: '/record', label: 'Record', icon: Mic },
+    { path: '/timeline', label: 'Timeline', icon: Clock },
+    { path: '/analytics', label: 'Analytics', icon: BarChart3 },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -41,18 +42,18 @@ const Navigation = ({ user }) => {
   };
 
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+    <nav className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link 
             to="/" 
-            className="flex items-center gap-3 font-bold text-xl text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+            className="flex items-center gap-3 font-bold text-xl text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
           >
-            <div className="p-2 bg-blue-600 rounded-lg">
-              <Shield className="h-5 w-5 text-white" />
+            <div className="p-2 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg">
+              <Mic className="h-5 w-5 text-white" />
             </div>
-            <span className="hidden sm:block">TruthGuard</span>
+            <span className="hidden sm:block">ProofMate</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -65,8 +66,8 @@ const Navigation = ({ user }) => {
                   to={item.path}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
                     isActive(item.path)
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -78,7 +79,7 @@ const Navigation = ({ user }) => {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 ml-2"
+              className="p-2 text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 ml-2"
               title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -89,7 +90,7 @@ const Navigation = ({ user }) => {
               <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-200 dark:border-gray-700">
                 <Link
                   to="/profile"
-                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
                   title="Profile"
                 >
                   <User className="h-5 w-5" />
@@ -105,7 +106,7 @@ const Navigation = ({ user }) => {
             ) : (
               <Link
                 to="/login"
-                className="ml-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium"
+                className="ml-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium"
               >
                 Login
               </Link>
@@ -115,7 +116,7 @@ const Navigation = ({ user }) => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 transition-colors rounded-lg"
+            className="md:hidden p-2 text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 transition-colors rounded-lg"
           >
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -139,8 +140,8 @@ const Navigation = ({ user }) => {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                       isActive(item.path)
-                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                     }`}
                   >
                     <Icon className="h-5 w-5" />
@@ -152,7 +153,7 @@ const Navigation = ({ user }) => {
               {/* Mobile Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+                className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
               >
                 {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 <span className="font-medium">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
@@ -164,7 +165,7 @@ const Navigation = ({ user }) => {
                   <Link
                     to="/profile"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+                    className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
                   >
                     <User className="h-5 w-5" />
                     <span className="font-medium">Profile</span>
@@ -184,7 +185,7 @@ const Navigation = ({ user }) => {
                 <Link
                   to="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg transition-all duration-200 text-center font-medium"
+                  className="mt-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-3 rounded-lg transition-all duration-200 text-center font-medium"
                 >
                   Login
                 </Link>

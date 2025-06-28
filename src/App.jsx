@@ -10,7 +10,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 // Pages
 import HomePage from "./pages/HomePage";
 import DashboardPage from "./pages/DashboardPage";
-import VerificationPage from "./pages/VerificationPage";
+import RecordPage from "./pages/RecordPage";
+import TimelinePage from "./pages/TimelinePage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
@@ -52,13 +53,14 @@ function App() {
   return (
     <ThemeProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
           <Layout user={user}>
             <AnimatePresence mode="wait">
               <Routes>
                 <Route path="/" element={<HomePage user={user} />} />
                 <Route path="/dashboard" element={<DashboardPage user={user} />} />
-                <Route path="/verify" element={<VerificationPage user={user} />} />
+                <Route path="/record" element={<RecordPage user={user} />} />
+                <Route path="/timeline" element={<TimelinePage user={user} />} />
                 <Route path="/analytics" element={<AnalyticsPage user={user} />} />
                 <Route path="/profile" element={<ProfilePage user={user} />} />
                 <Route path="/login" element={<LoginPage />} />
