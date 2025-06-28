@@ -5,6 +5,33 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Primary and Accent aliases
+        'primary': {
+          50: '#f5f0ff',
+          100: '#ebe1ff',
+          200: '#d7c3ff',
+          300: '#c3a5ff',
+          400: '#af87ff',
+          500: '#9B69FF',
+          600: '#9747FF',
+          700: '#7c38cc',
+          800: '#612999',
+          900: '#461a66',
+          950: '#2b0d33'
+        },
+        'accent': {
+          50: '#f0fffe',
+          100: '#ccfffe',
+          200: '#99fffd',
+          300: '#66fffc',
+          400: '#33fffb',
+          500: '#00F4E3',
+          600: '#00c7b8',
+          700: '#009a8d',
+          800: '#006d62',
+          900: '#004037',
+          950: '#00201b'
+        },
         // Deep Space Theme
         'deep-space': {
           50: '#f0f0f7',
