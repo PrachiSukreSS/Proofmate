@@ -19,6 +19,12 @@ import {
   List,
   SortAsc,
   SortDesc,
+  Mic,
+  Play,
+  Pause,
+  Eye,
+  Edit3,
+  Trash2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import MemoryCard from "../components/MemoryCard";
@@ -26,11 +32,7 @@ import MemoryViewer from "../components/MemoryViewer";
 import MemoryEditor from "../components/MemoryEditor";
 import { supabase } from "../utils/supabaseClient";
 import { verifyMemoryIntegrity } from "../utils/blockchainVerification";
-import {
-  searchMemoriesWithAI,
-  getProductivityInsights,
-  analyzeSentimentTrends,
-} from "../utils/aiProcessor";
+import { searchMemoriesWithAI } from "../utils/openaiProcessor";
 import { useToast } from "../hooks/use-toast";
 
 const TimelinePage = ({ user }) => {
@@ -45,9 +47,6 @@ const TimelinePage = ({ user }) => {
   const [sortBy, setSortBy] = useState("newest");
   const [sortOrder, setSortOrder] = useState("desc");
   const [viewMode, setViewMode] = useState("grid");
-  const [showInsights, setShowInsights] = useState(false);
-  const [insights, setInsights] = useState(null);
-  const [sentimentTrends, setSentimentTrends] = useState([]);
   const [selectedMemory, setSelectedMemory] = useState(null);
   const [editingMemory, setEditingMemory] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -57,7 +56,6 @@ const TimelinePage = ({ user }) => {
   useEffect(() => {
     if (user) {
       loadMemories();
-      loadInsights();
     } else {
       setIsLoading(false);
     }
@@ -144,22 +142,6 @@ const TimelinePage = ({ user }) => {
     setFilteredMemories(filtered);
   };
 
-  const loadInsights = async () => {
-    if (!user) return;
-
-    try {
-      const [productivityData, sentimentData] = await Promise.all([
-        getProductivityInsights(user.id),
-        analyzeSentimentTrends(user.id),
-      ]);
-
-      setInsights(productivityData);
-      setSentimentTrends(sentimentData);
-    } catch (error) {
-      console.error("Error loading insights:", error);
-    }
-  };
-
   const handleSearch = async (query) => {
     setSearchQuery(query);
     if (!query.trim() || !user) {
@@ -167,8 +149,8 @@ const TimelinePage = ({ user }) => {
     }
 
     try {
-      const results = await searchMemoriesWithAI(query, user.id);
-      setMemories(results);
+      const results = await searchMemoriesWithAI(query, memories);
+      setFilteredMemories(results);
     } catch (error) {
       console.error("Search error:", error);
       toast({
@@ -181,22 +163,25 @@ const TimelinePage = ({ user }) => {
 
   const handleViewMemory = async (memory) => {
     try {
-      const verification = await verifyMemoryIntegrity(
-        memory.id,
-        memory.blockchain_hash
-      );
+      if (memory.blockchain_hash) {
+        const verification = await verifyMemoryIntegrity(
+          memory.id,
+          memory.blockchain_hash
+        );
 
-      if (verification.verified) {
-        toast({
-          title: "Memory Verified ✅",
-          description: `Viewing: ${memory.title} - Integrity confirmed`,
-        });
-      } else {
-        toast({
-          title: "Verification Warning ⚠️",
-          description: "Memory integrity could not be verified",
-          variant: "destructive",
-        });
+        if (verification.verified) {
+          toast({
+            title: "Memory Verified ✅",
+            description: `Viewing: ${memory.title} - Integrity confirmed`,
+            variant: "success"
+          });
+        } else {
+          toast({
+            title: "Verification Warning ⚠️",
+            description: "Memory integrity could not be verified",
+            variant: "destructive",
+          });
+        }
       }
 
       setSelectedMemory(memory);
@@ -232,6 +217,7 @@ const TimelinePage = ({ user }) => {
       toast({
         title: "Memory Deleted",
         description: "The memory has been permanently deleted.",
+        variant: "success"
       });
     } catch (error) {
       console.error("Delete error:", error);
@@ -294,17 +280,16 @@ const TimelinePage = ({ user }) => {
         memory.id === updatedMemory.id ? updatedMemory : memory
       )
     );
-    loadInsights(); // Refresh insights
   };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await loadMemories();
-    await loadInsights();
     setIsRefreshing(false);
     toast({
       title: "Refreshed",
       description: "Timeline has been updated",
+      variant: "success"
     });
   };
 
@@ -323,6 +308,7 @@ const TimelinePage = ({ user }) => {
     toast({
       title: "Data Exported",
       description: "Your memories have been exported as JSON",
+      variant: "success"
     });
   };
 
@@ -371,7 +357,7 @@ const TimelinePage = ({ user }) => {
   const EmptyState = () => (
     <div className="text-center py-16 space-y-6">
       <div className="w-24 h-24 mx-auto bg-gradient-to-r from-purple-200 to-indigo-200 rounded-full flex items-center justify-center">
-        <Calendar className="h-12 w-12 text-purple-400" />
+        <Mic className="h-12 w-12 text-purple-400" />
       </div>
       <div className="space-y-2">
         <h3 className="text-2xl font-semibold text-slate-700">
@@ -384,60 +370,13 @@ const TimelinePage = ({ user }) => {
         </p>
         {!searchQuery && (
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/record")}
             className="mt-4 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 px-6 py-3 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105"
           >
             Create Your First Memory
           </button>
         )}
       </div>
-    </div>
-  );
-
-  // Insights Panel
-  const InsightsPanel = () => (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border-2 border-purple-200 mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-purple-600" />
-          Productivity Insights
-        </h3>
-        <button
-          onClick={() => setShowInsights(!showInsights)}
-          className="text-purple-600 hover:text-purple-700 text-sm font-medium"
-        >
-          {showInsights ? "Hide" : "Show"} Details
-        </button>
-      </div>
-
-      {showInsights && insights && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-purple-600">
-              {insights.totalMemories}
-            </div>
-            <div className="text-sm text-purple-700">Total Memories</div>
-          </div>
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">
-              {insights.actionItems}
-            </div>
-            <div className="text-sm text-blue-700">Action Items</div>
-          </div>
-          <div className="bg-green-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">
-              {Math.round(insights.completionRate * 100)}%
-            </div>
-            <div className="text-sm text-green-700">Completion Rate</div>
-          </div>
-          <div className="bg-orange-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-orange-600">
-              {Object.keys(insights.categories).length}
-            </div>
-            <div className="text-sm text-orange-700">Categories</div>
-          </div>
-        </div>
-      )}
     </div>
   );
 
@@ -530,14 +469,7 @@ const TimelinePage = ({ user }) => {
           </div>
 
           <div className="text-center md:text-left">
-            <h1
-              className="text-4xl md:text-5xl font-bold text-slate-800 mb-4"
-              style={{
-                fontFamily: '"Nunito", "Inter", system-ui, sans-serif',
-                fontWeight: "800",
-                letterSpacing: "-0.02em",
-              }}
-            >
+            <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">
               Smart Memory Timeline
             </h1>
             <p className="text-lg text-slate-700 max-w-2xl">
@@ -545,9 +477,6 @@ const TimelinePage = ({ user }) => {
               extraction, and blockchain verification.
             </p>
           </div>
-
-          {/* Insights Panel */}
-          {insights && <InsightsPanel />}
 
           {/* Controls */}
           <div className="flex flex-col lg:flex-row gap-4 items-center">
