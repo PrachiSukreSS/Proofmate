@@ -146,12 +146,6 @@ const AccessibilityEnhancer = () => {
       label: 'Color Blind Friendly',
       description: 'Adjust colors for color vision deficiency',
       icon: MousePointer
-    },
-    {
-      key: 'textToSpeech',
-      label: 'Text to Speech',
-      description: 'Enable text-to-speech functionality',
-      icon: Volume2
     }
   ];
 
@@ -160,7 +154,7 @@ const AccessibilityEnhancer = () => {
       {/* Accessibility Button */}
       <motion.button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 left-6 z-50 w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
+        className="fixed bottom-6 left-6 z-50 w-14 h-14 glassmorphic rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         initial={{ scale: 0 }}
@@ -168,7 +162,7 @@ const AccessibilityEnhancer = () => {
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
         aria-label="Open accessibility settings"
       >
-        <Eye className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
+        <Eye className="h-6 w-6 text-primary-600 group-hover:scale-110 transition-transform" />
       </motion.button>
 
       {/* Accessibility Panel */}
@@ -186,7 +180,7 @@ const AccessibilityEnhancer = () => {
 
             {/* Panel */}
             <motion.div
-              className="fixed left-6 bottom-24 z-50 w-80 max-h-[70vh] bg-white dark:bg-deep-space-800 rounded-2xl shadow-2xl border border-stardust-200 dark:border-deep-space-700 overflow-hidden"
+              className="fixed left-6 bottom-24 z-50 w-80 max-h-[70vh] glassmorphic rounded-2xl shadow-2xl overflow-hidden"
               initial={{ opacity: 0, scale: 0.8, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 20 }}
@@ -219,18 +213,18 @@ const AccessibilityEnhancer = () => {
                     return (
                       <div
                         key={option.key}
-                        className="flex items-start gap-3 p-3 rounded-lg hover:bg-stardust-50 dark:hover:bg-deep-space-700 transition-colors"
+                        className="flex items-start gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors"
                       >
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                           isEnabled 
                             ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
-                            : 'bg-stardust-200 dark:bg-deep-space-600 text-stardust-600 dark:text-stardust-400'
+                            : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
                         }`}>
                           <Icon className="h-5 w-5" />
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
-                            <h4 className="font-medium text-deep-space-900 dark:text-stardust-50">
+                            <h4 className="font-medium text-gray-900 dark:text-gray-100">
                               {option.label}
                             </h4>
                             <button
@@ -238,7 +232,7 @@ const AccessibilityEnhancer = () => {
                               className={`relative w-12 h-6 rounded-full transition-colors ${
                                 isEnabled 
                                   ? 'bg-gradient-to-r from-blue-500 to-purple-500' 
-                                  : 'bg-stardust-300 dark:bg-deep-space-600'
+                                  : 'bg-gray-300 dark:bg-gray-600'
                               }`}
                               aria-label={`Toggle ${option.label}`}
                             >
@@ -249,7 +243,7 @@ const AccessibilityEnhancer = () => {
                               />
                             </button>
                           </div>
-                          <p className="text-sm text-stardust-600 dark:text-stardust-400 mt-1">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                             {option.description}
                           </p>
                         </div>
@@ -259,12 +253,12 @@ const AccessibilityEnhancer = () => {
                 </div>
 
                 {/* Reset Button */}
-                <div className="mt-6 pt-4 border-t border-stardust-200 dark:border-deep-space-700">
+                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button
                     onClick={resetSettings}
-                    className="w-full p-3 bg-stardust-100 dark:bg-deep-space-700 hover:bg-stardust-200 dark:hover:bg-deep-space-600 rounded-lg transition-colors text-center"
+                    className="w-full p-3 glassmorphic hover:bg-white/20 rounded-lg transition-colors text-center"
                   >
-                    <span className="text-sm font-medium text-deep-space-900 dark:text-stardust-50">
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       Reset to Defaults
                     </span>
                   </button>

@@ -9,12 +9,12 @@
   }
   
   body {
-    @apply bg-stardust-50 dark:bg-deep-space-900 text-deep-space-900 dark:text-stardust-50 transition-colors duration-300;
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
   * {
-    @apply border-stardust-200 dark:border-deep-space-700;
+    @apply border-gray-200 dark:border-gray-700;
   }
 
   /* Custom scrollbar */
@@ -24,70 +24,50 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-stardust-100 dark:bg-deep-space-800;
+    @apply bg-gray-100 dark:bg-gray-800;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-cosmic-purple-400 dark:bg-cosmic-purple-600 rounded-full;
+    @apply bg-primary-400 dark:bg-primary-600 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-cosmic-purple-500 dark:bg-cosmic-purple-500;
+    @apply bg-primary-500 dark:bg-primary-500;
   }
 
   /* Focus styles */
   *:focus {
-    @apply outline-none ring-2 ring-electric-teal-500 ring-offset-2 ring-offset-stardust-50 dark:ring-offset-deep-space-900;
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-gray-50 dark:ring-offset-gray-900;
   }
 
   /* Selection styles */
   ::selection {
-    @apply bg-electric-teal-500 text-deep-space-900;
+    @apply bg-primary-500 text-white;
   }
 }
 
 @layer components {
   /* Button Components */
   .btn-primary {
-    @apply bg-gradient-to-r from-cosmic-purple-500 to-electric-teal-500 hover:from-cosmic-purple-600 hover:to-electric-teal-600 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl focus:ring-2 focus:ring-cosmic-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
+    @apply bg-gradient-to-r from-primary-600 to-accent-500 hover:from-primary-700 hover:to-accent-600 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
   }
   
   .btn-secondary {
-    @apply bg-stardust-200 hover:bg-stardust-300 dark:bg-deep-space-700 dark:hover:bg-deep-space-600 text-deep-space-900 dark:text-stardust-50 font-semibold px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg;
+    @apply glassmorphic dark:glassmorphic-dark text-gray-900 dark:text-gray-100 font-semibold px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-700;
   }
 
   .btn-ghost {
-    @apply bg-transparent hover:bg-stardust-100 dark:hover:bg-deep-space-800 text-deep-space-700 dark:text-stardust-200 font-medium px-4 py-2 rounded-lg transition-all duration-200;
-  }
-
-  .btn-glass {
-    @apply glassmorphic dark:glassmorphic-dark text-deep-space-900 dark:text-stardust-50 font-semibold px-6 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-glass;
+    @apply bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium px-4 py-2 rounded-lg transition-all duration-200;
   }
 
   /* Card Components */
   .card {
-    @apply bg-white/80 dark:bg-deep-space-800/80 backdrop-blur-xl rounded-2xl shadow-xl border border-stardust-200/50 dark:border-deep-space-700/50 transition-all duration-300;
-  }
-
-  .card-glass {
-    @apply glassmorphic dark:glassmorphic-dark rounded-2xl shadow-glass transition-all duration-300 hover:shadow-glow-md;
-  }
-
-  .card-neumorphic {
-    @apply neumorphic dark:neumorphic-dark rounded-2xl transition-all duration-300;
-  }
-
-  .card-3d {
-    @apply card transform-gpu transition-all duration-300 hover:rotate-y-12 preserve-3d;
+    @apply glassmorphic dark:glassmorphic-dark rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300;
   }
 
   /* Input Components */
   .input-field {
-    @apply w-full px-4 py-3 bg-white/80 dark:bg-deep-space-800/80 backdrop-blur-sm border border-stardust-300 dark:border-deep-space-600 rounded-xl focus:ring-2 focus:ring-electric-teal-500 focus:border-transparent transition-all duration-200 placeholder-stardust-400 dark:placeholder-deep-space-400;
-  }
-
-  .input-glass {
-    @apply glassmorphic dark:glassmorphic-dark w-full px-4 py-3 rounded-xl focus:ring-2 focus:ring-electric-teal-500 transition-all duration-200 placeholder-stardust-400 dark:placeholder-deep-space-400;
+    @apply w-full px-4 py-3 glassmorphic dark:glassmorphic-dark border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500;
   }
 
   /* Navigation Components */
@@ -96,20 +76,16 @@
   }
 
   .nav-link-active {
-    @apply nav-link bg-gradient-to-r from-cosmic-purple-100 to-electric-teal-100 dark:from-cosmic-purple-900/30 dark:to-electric-teal-900/30 text-cosmic-purple-700 dark:text-electric-teal-300 shadow-md;
+    @apply nav-link bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 shadow-md;
   }
 
   .nav-link-inactive {
-    @apply nav-link text-stardust-600 dark:text-stardust-300 hover:text-cosmic-purple-700 dark:hover:text-electric-teal-300 hover:bg-stardust-100 dark:hover:bg-deep-space-800;
+    @apply nav-link text-gray-600 dark:text-gray-300 hover:text-primary-700 dark:hover:text-primary-300 hover:bg-gray-100 dark:hover:bg-gray-800;
   }
 
   /* Text Components */
   .text-gradient {
-    @apply bg-gradient-to-r from-cosmic-purple-600 via-electric-teal-500 to-nebula-pink-500 bg-clip-text text-transparent;
-  }
-
-  .text-cosmic {
-    @apply bg-cosmic bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary-600 via-accent-500 to-primary-600 bg-clip-text text-transparent;
   }
 
   /* Layout Components */
@@ -121,68 +97,13 @@
     @apply py-8 sm:py-12 lg:py-16;
   }
 
-  /* Animation Components */
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  .animate-glow {
-    animation: glow 2s ease-in-out infinite alternate;
-  }
-
-  .animate-shimmer {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .animate-shimmer::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    animation: shimmer 2s linear infinite;
-  }
-
-  /* Accessibility Components */
-  .sr-only {
-    @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
-  }
-
-  .focus-visible {
-    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-electric-teal-500 focus-visible:ring-offset-2;
-  }
-
-  /* Loading Components */
-  .loading-spinner {
-    @apply w-8 h-8 border-4 border-stardust-200 dark:border-deep-space-700 border-t-electric-teal-500 rounded-full animate-spin;
-  }
-
-  .loading-dots {
-    @apply flex space-x-1;
-  }
-
-  .loading-dots > div {
-    @apply w-2 h-2 bg-electric-teal-500 rounded-full animate-bounce;
-  }
-
-  .loading-dots > div:nth-child(2) {
-    animation-delay: 0.1s;
-  }
-
-  .loading-dots > div:nth-child(3) {
-    animation-delay: 0.2s;
-  }
-
   /* Status Components */
   .status-success {
     @apply bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800;
   }
 
   .status-warning {
-    @apply bg-stellar-gold-100 dark:bg-stellar-gold-900/20 text-stellar-gold-800 dark:text-stellar-gold-200 border border-stellar-gold-200 dark:border-stellar-gold-800;
+    @apply bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800;
   }
 
   .status-error {
@@ -190,7 +111,7 @@
   }
 
   .status-info {
-    @apply bg-electric-teal-100 dark:bg-electric-teal-900/20 text-electric-teal-800 dark:text-electric-teal-200 border border-electric-teal-200 dark:border-electric-teal-800;
+    @apply bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800;
   }
 
   /* Spacing utilities */
@@ -208,54 +129,17 @@
 }
 
 @layer utilities {
-  /* 3D Transform Utilities */
-  .rotate-y-12 {
-    transform: rotateY(12deg);
+  /* Glassmorphism utilities */
+  .glassmorphic {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
   }
 
-  .rotate-y-180 {
-    transform: rotateY(180deg);
-  }
-
-  .rotate-x-12 {
-    transform: rotateX(12deg);
-  }
-
-  /* Parallax Utilities */
-  .parallax-slow {
-    transform: translateZ(-1px) scale(2);
-  }
-
-  .parallax-medium {
-    transform: translateZ(-2px) scale(3);
-  }
-
-  .parallax-fast {
-    transform: translateZ(-3px) scale(4);
-  }
-
-  /* Backdrop Utilities */
-  .backdrop-blur-xs {
-    backdrop-filter: blur(2px);
-  }
-
-  /* Custom Grid */
-  .grid-auto-fit {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  }
-
-  .grid-auto-fill {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  }
-
-  /* Aspect Ratio */
-  .aspect-golden {
-    aspect-ratio: 1.618 / 1;
-  }
-
-  /* Typography */
-  .text-balance {
-    text-wrap: balance;
+  .glassmorphic-dark {
+    background: rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   /* Interaction States */
@@ -264,7 +148,7 @@
   }
 
   .hover-glow {
-    @apply transition-shadow duration-300 hover:shadow-glow-lg;
+    @apply transition-shadow duration-300 hover:shadow-lg;
   }
 
   .active-scale {
@@ -275,7 +159,7 @@
 /* Dark mode specific styles */
 @media (prefers-color-scheme: dark) {
   .dark-auto {
-    @apply dark:bg-deep-space-900 dark:text-stardust-50;
+    @apply dark:bg-gray-900 dark:text-gray-100;
   }
 }
 
@@ -293,11 +177,11 @@
 /* High contrast mode */
 @media (prefers-contrast: high) {
   .card {
-    @apply border-2 border-deep-space-900 dark:border-stardust-50;
+    @apply border-2 border-gray-900 dark:border-gray-100;
   }
   
   .btn-primary {
-    @apply border-2 border-deep-space-900 dark:border-stardust-50;
+    @apply border-2 border-gray-900 dark:border-gray-100;
   }
 }
 

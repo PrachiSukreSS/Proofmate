@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, TrendingUp, Clock, Wifi } from 'lucide-react';
+import { Zap, TrendingUp, Clock, Wifi, X } from 'lucide-react';
 
 const PerformanceOptimizer = () => {
   const [metrics, setMetrics] = useState({
@@ -49,14 +49,14 @@ const PerformanceOptimizer = () => {
       window.addEventListener('load', measurePerformance);
     }
 
-    // Show performance indicator if score is below threshold
+    // Show performance indicator only if score is very low (below 70)
     const timer = setTimeout(() => {
-      if (metrics.score < 90) {
+      if (metrics.score < 70 && metrics.score > 0) {
         setIsVisible(true);
-        // Auto-hide after 5 seconds
-        setTimeout(() => setIsVisible(false), 5000);
+        // Auto-hide after 4 seconds
+        setTimeout(() => setIsVisible(false), 4000);
       }
-    }, 2000);
+    }, 3000);
 
     return () => {
       window.removeEventListener('load', measurePerformance);
@@ -84,9 +84,9 @@ const PerformanceOptimizer = () => {
         initial={{ opacity: 0, x: 300 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 300 }}
-        className="fixed bottom-20 right-6 z-40 max-w-sm"
+        className="fixed bottom-24 right-6 z-40 max-w-sm"
       >
-        <div className="card p-4 shadow-xl">
+        <div className="glassmorphic p-4 shadow-xl rounded-xl">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 bg-gradient-to-r ${getScoreColor(metrics.score)} rounded-full flex items-center justify-center`}>
@@ -97,11 +97,20 @@ const PerformanceOptimizer = () => {
                 <p className="text-xs text-gray-500">{getScoreLabel(metrics.score)}</p>
               </div>
             </div>
-            <div className="text-right">
-              <div className={`text-2xl font-bold bg-gradient-to-r ${getScoreColor(metrics.score)} bg-clip-text text-transparent`}>
-                {metrics.score}
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className={`text-2xl font-bold bg-gradient-to-r ${getScoreColor(metrics.score)} bg-clip-text text-transparent`}>
+                  {metrics.score}
+                </div>
+                <div className="text-xs text-gray-500">Score</div>
               </div>
-              <div className="text-xs text-gray-500">Score</div>
+              <button
+                onClick={() => setIsVisible(false)}
+                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                aria-label="Dismiss"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           </div>
 
@@ -134,13 +143,6 @@ const PerformanceOptimizer = () => {
               </span>
             </div>
           </div>
-
-          <button
-            onClick={() => setIsVisible(false)}
-            className="mt-3 w-full text-xs text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            Dismiss
-          </button>
         </div>
       </motion.div>
     </AnimatePresence>
