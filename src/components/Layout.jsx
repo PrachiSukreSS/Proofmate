@@ -31,6 +31,7 @@ const Layout = ({ children, user }) => {
       <PerformanceOptimizer />
       <AccessibilityEnhancer />
     </div>
+  )
   );
 };
 
