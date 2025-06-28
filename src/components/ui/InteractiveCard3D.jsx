@@ -4,9 +4,9 @@ import { motion } from 'framer-motion';
 const InteractiveCard3D = ({ 
   children, 
   className = '', 
-  intensity = 15,
+  intensity = 10,
   perspective = 1000,
-  scale = 1.05,
+  scale = 1.02,
   glowEffect = false,
   ...props 
 }) => {
@@ -69,7 +69,7 @@ const InteractiveCard3D = ({
       {/* Glow Effect */}
       {glowEffect && isHovered && (
         <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-cosmic-purple-500/20 to-electric-teal-500/20 rounded-2xl blur-xl"
+          className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-indigo-500/20 rounded-2xl blur-xl"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

@@ -49,9 +49,9 @@ const PerformanceOptimizer = () => {
       window.addEventListener('load', measurePerformance);
     }
 
-    // Show performance indicator only if score is very low (below 70)
+    // Show performance indicator only if score is very low (below 60)
     const timer = setTimeout(() => {
-      if (metrics.score < 70 && metrics.score > 0) {
+      if (metrics.score < 60 && metrics.score > 0) {
         setIsVisible(true);
         // Auto-hide after 4 seconds
         setTimeout(() => setIsVisible(false), 4000);
@@ -81,36 +81,47 @@ const PerformanceOptimizer = () => {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, x: 300 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: 300 }}
+        initial={{ opacity: 0, x: 300, scale: 0.8 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        exit={{ opacity: 0, x: 300, scale: 0.8 }}
         className="fixed bottom-24 right-6 z-40 max-w-sm"
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
       >
-        <div className="glassmorphic p-4 shadow-xl rounded-xl">
+        <div className="card-glass p-4 shadow-2xl rounded-2xl border border-purple-200/30">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 bg-gradient-to-r ${getScoreColor(metrics.score)} rounded-full flex items-center justify-center`}>
+              <motion.div 
+                className={`w-8 h-8 bg-gradient-to-r ${getScoreColor(metrics.score)} rounded-full flex items-center justify-center`}
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              >
                 <Zap className="h-4 w-4 text-white" />
-              </div>
+              </motion.div>
               <div>
-                <h3 className="font-semibold text-sm">Performance</h3>
-                <p className="text-xs text-gray-500">{getScoreLabel(metrics.score)}</p>
+                <h3 className="font-semibold text-sm text-gray-900 dark:text-white">Performance</h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400">{getScoreLabel(metrics.score)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <div className="text-right">
-                <div className={`text-2xl font-bold bg-gradient-to-r ${getScoreColor(metrics.score)} bg-clip-text text-transparent`}>
+                <motion.div 
+                  className={`text-2xl font-bold bg-gradient-to-r ${getScoreColor(metrics.score)} bg-clip-text text-transparent`}
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
                   {metrics.score}
-                </div>
-                <div className="text-xs text-gray-500">Score</div>
+                </motion.div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Score</div>
               </div>
-              <button
+              <motion.button
                 onClick={() => setIsVisible(false)}
-                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                className="p-1 hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-full transition-colors"
                 aria-label="Dismiss"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
               >
                 <X className="h-4 w-4" />
-              </button>
+              </motion.button>
             </div>
           </div>
 

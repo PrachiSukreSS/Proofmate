@@ -5,8 +5,6 @@ import {
   EyeOff,
   Type,
   Contrast,
-  Volume2,
-  VolumeX,
   MousePointer,
   Keyboard,
   Settings,
@@ -19,11 +17,9 @@ const AccessibilityEnhancer = () => {
     highContrast: false,
     largeText: false,
     reducedMotion: false,
-    screenReader: false,
     keyboardNavigation: false,
     focusIndicators: true,
-    colorBlindFriendly: false,
-    textToSpeech: false
+    colorBlindFriendly: false
   });
 
   useEffect(() => {
@@ -101,11 +97,9 @@ const AccessibilityEnhancer = () => {
       highContrast: false,
       largeText: false,
       reducedMotion: false,
-      screenReader: false,
       keyboardNavigation: false,
       focusIndicators: true,
-      colorBlindFriendly: false,
-      textToSpeech: false
+      colorBlindFriendly: false
     };
     setSettings(defaultSettings);
   };
@@ -154,7 +148,7 @@ const AccessibilityEnhancer = () => {
       {/* Accessibility Button */}
       <motion.button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 left-6 z-50 w-14 h-14 glassmorphic rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
+        className="fixed bottom-6 left-6 z-50 w-14 h-14 card-glass rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         initial={{ scale: 0 }}
@@ -162,7 +156,7 @@ const AccessibilityEnhancer = () => {
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
         aria-label="Open accessibility settings"
       >
-        <Eye className="h-6 w-6 text-primary-600 group-hover:scale-110 transition-transform" />
+        <Eye className="h-6 w-6 text-purple-600 group-hover:scale-110 transition-transform" />
       </motion.button>
 
       {/* Accessibility Panel */}
@@ -180,14 +174,14 @@ const AccessibilityEnhancer = () => {
 
             {/* Panel */}
             <motion.div
-              className="fixed left-6 bottom-24 z-50 w-80 max-h-[70vh] glassmorphic rounded-2xl shadow-2xl overflow-hidden"
+              className="fixed left-6 bottom-24 z-50 w-80 max-h-[70vh] card-glass rounded-2xl shadow-2xl overflow-hidden"
               initial={{ opacity: 0, scale: 0.8, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 20 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               {/* Header */}
-              <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4 flex items-center justify-between">
+              <div className="bg-gradient-to-r from-purple-500 to-blue-500 p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Eye className="h-6 w-6 text-white" />
                   <div>
@@ -217,7 +211,7 @@ const AccessibilityEnhancer = () => {
                       >
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                           isEnabled 
-                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
+                            ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white' 
                             : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
                         }`}>
                           <Icon className="h-5 w-5" />
@@ -231,7 +225,7 @@ const AccessibilityEnhancer = () => {
                               onClick={() => toggleSetting(option.key)}
                               className={`relative w-12 h-6 rounded-full transition-colors ${
                                 isEnabled 
-                                  ? 'bg-gradient-to-r from-blue-500 to-purple-500' 
+                                  ? 'bg-gradient-to-r from-purple-500 to-blue-500' 
                                   : 'bg-gray-300 dark:bg-gray-600'
                               }`}
                               aria-label={`Toggle ${option.label}`}
@@ -256,7 +250,7 @@ const AccessibilityEnhancer = () => {
                 <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button
                     onClick={resetSettings}
-                    className="w-full p-3 glassmorphic hover:bg-white/20 rounded-lg transition-colors text-center"
+                    className="w-full p-3 card-glass hover:bg-white/20 rounded-lg transition-colors text-center"
                   >
                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       Reset to Defaults
@@ -290,13 +284,13 @@ const AccessibilityEnhancer = () => {
         }
         
         .enhanced-focus *:focus {
-          outline: 3px solid #3b82f6 !important;
+          outline: 3px solid #8b5cf6 !important;
           outline-offset: 2px !important;
         }
         
         .keyboard-nav {
           --focus-ring-width: 3px;
-          --focus-ring-color: #3b82f6;
+          --focus-ring-color: #8b5cf6;
         }
         
         .color-blind-friendly {
