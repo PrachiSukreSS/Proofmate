@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 const TOAST_LIMIT = 3;
-const TOAST_REMOVE_DELAY = 5000;
+const TOAST_REMOVE_DELAY = 4000; // Reduced from 5000ms to 4000ms
 
 let count = 0;
 function genId() {
@@ -109,6 +109,7 @@ function useToast() {
     ...state,
     toast,
     dismiss: (toastId) => dispatch({ type: "DISMISS_TOAST", toastId }),
+    dismissAll: () => dispatch({ type: "DISMISS_TOAST" }),
   };
 }
 

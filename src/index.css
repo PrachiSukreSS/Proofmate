@@ -118,7 +118,7 @@
   }
 
   .section-padding {
-    @apply py-16 sm:py-20 lg:py-24;
+    @apply py-8 sm:py-12 lg:py-16;
   }
 
   /* Animation Components */
@@ -191,6 +191,19 @@
 
   .status-info {
     @apply bg-electric-teal-100 dark:bg-electric-teal-900/20 text-electric-teal-800 dark:text-electric-teal-200 border border-electric-teal-200 dark:border-electric-teal-800;
+  }
+
+  /* Spacing utilities */
+  .space-y-8 > * + * {
+    margin-top: 2rem;
+  }
+
+  .space-y-6 > * + * {
+    margin-top: 1.5rem;
+  }
+
+  .space-y-4 > * + * {
+    margin-top: 1rem;
   }
 }
 
@@ -301,4 +314,20 @@
   .btn-primary {
     @apply bg-gray-800 text-white;
   }
+}
+
+/* Animation keyframes */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 5px rgba(0, 244, 227, 0.5); }
+  100% { box-shadow: 0 0 20px rgba(0, 244, 227, 0.8); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }

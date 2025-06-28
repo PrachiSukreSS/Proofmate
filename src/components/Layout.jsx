@@ -33,8 +33,13 @@ const Layout = ({ children, user }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-stardust-50 via-white to-electric-teal-50 dark:from-deep-space-900 dark:via-deep-space-800 dark:to-deep-space-900 transition-colors duration-300">
       {/* Background Pattern */}
-      <div className="fixed inset-0 opacity-5 dark:opacity-10">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239747FF%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] bg-repeat"></div>
+      <div className="fixed inset-0 opacity-5 dark:opacity-10 pointer-events-none">
+        <div 
+          className="absolute inset-0 bg-repeat"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239747FF%22%20fill-opacity%3D%220.1%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%222%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+          }}
+        />
       </div>
 
       {/* Navigation */}
@@ -47,7 +52,9 @@ const Layout = ({ children, user }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {children}
+        <div className="space-y-8">
+          {children}
+        </div>
       </motion.main>
 
       {/* Interactive Components */}

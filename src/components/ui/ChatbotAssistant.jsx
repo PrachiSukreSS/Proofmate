@@ -18,7 +18,9 @@ import {
   Zap,
   HelpCircle,
   BookOpen,
-  Target
+  Target,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { useToast } from '../../hooks/use-toast';
 
@@ -39,8 +41,10 @@ const ChatbotAssistant = ({ user }) => {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [personality, setPersonality] = useState('professional');
   const [isListening, setIsListening] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const recognitionRef = useRef(null);
   const { toast } = useToast();
 
   const personalities = {
@@ -108,10 +112,18 @@ const ChatbotAssistant = ({ user }) => {
   }, [messages]);
 
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (isOpen && inputRef.current && !isMinimized) {
       inputRef.current.focus();
     }
-  }, [isOpen]);
+  }, [isOpen, isMinimized]);
+
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -119,92 +131,119 @@ const ChatbotAssistant = ({ user }) => {
 
   const generateBotResponse = async (userMessage) => {
     setIsTyping(true);
+    setIsProcessing(true);
     
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-    
-    const responses = {
-      verification: [
-        "To verify content, simply upload your file or record audio using our verification page. Our AI will analyze it for authenticity, bias, and factual accuracy. The process typically takes 30-60 seconds.",
-        "Our verification process uses multiple AI models including GPT-4 for content analysis, blockchain for immutable proof, and specialized algorithms for deepfake detection.",
-        "You can verify videos, audio files, documents, and images. Each type goes through tailored analysis pipelines for maximum accuracy."
-      ],
-      ai: [
-        "Our AI analysis combines natural language processing, computer vision, and audio analysis. It checks for consistency, factual accuracy, emotional manipulation, and technical authenticity markers.",
-        "The confidence score represents how certain our AI is about the content's authenticity. Scores above 90% indicate high confidence, while lower scores may require manual review.",
-        "Our AI is trained on millions of verified and manipulated content samples, allowing it to detect subtle patterns that indicate potential manipulation or misinformation."
-      ],
-      guide: [
-        "Welcome to TruthGuard! 🛡️ Start by uploading content for verification, view results in your dashboard, and export findings to your preferred tools. Our AI handles the complex analysis while you focus on making informed decisions.",
-        "TruthGuard offers three main features: Content Verification (upload and analyze), Analytics Dashboard (track your verification history), and Integration Tools (export to calendar, task managers, etc.).",
-        "New users should start with our demo verification to understand the process, then explore the dashboard to see analytics, and finally check out the subscription options for advanced features."
-      ],
-      practices: [
-        "For best results: 1) Upload high-quality files, 2) Provide context about the content source, 3) Cross-reference with multiple sources, 4) Review flagged items manually, 5) Keep your verification history organized.",
-        "Quality matters! Higher resolution videos, clear audio, and complete documents yield more accurate results. Our AI performs better with uncompressed, original files.",
-        "Always verify the source of your content when possible. Our AI can detect manipulation, but understanding the content's origin adds valuable context to the analysis."
-      ],
-      troubleshooting: [
-        "Common issues include: file format not supported (try converting to MP4/MP3/PDF), file too large (compress or upgrade plan), or slow processing (check internet connection). What specific issue are you experiencing?",
-        "If verification is taking too long, it might be due to high server load or complex content. Try refreshing the page or contact support if the issue persists.",
-        "For upload errors, ensure your file is under the size limit and in a supported format. Clear your browser cache if you continue experiencing issues."
-      ],
-      documentation: [
-        "You can find comprehensive documentation in our Help Center, including video tutorials, API documentation, and integration guides. Would you like me to direct you to a specific section?",
-        "Our documentation covers: Getting Started Guide, API Reference, Integration Tutorials, Troubleshooting, and Best Practices. All are accessible from the main menu.",
-        "For developers, we offer detailed API documentation with code examples, SDKs for popular languages, and webhook integration guides."
-      ],
-      default: [
-        "I'm here to help with any questions about TruthGuard! You can ask me about verification processes, AI analysis, troubleshooting, or general platform guidance.",
-        "That's an interesting question! While I specialize in TruthGuard assistance, I can help you understand how our platform addresses your specific needs.",
-        "I'd be happy to help! Could you provide more details about what you're trying to accomplish? I can offer more targeted guidance that way."
-      ]
-    };
+    try {
+      // Simulate AI processing delay
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+      
+      const responses = {
+        verification: [
+          "To verify content, simply upload your file or record audio using our verification page. Our AI will analyze it for authenticity, bias, and factual accuracy. The process typically takes 30-60 seconds.",
+          "Our verification process uses multiple AI models including GPT-4 for content analysis, blockchain for immutable proof, and specialized algorithms for deepfake detection.",
+          "You can verify videos, audio files, documents, and images. Each type goes through tailored analysis pipelines for maximum accuracy."
+        ],
+        ai: [
+          "Our AI analysis combines natural language processing, computer vision, and audio analysis. It checks for consistency, factual accuracy, emotional manipulation, and technical authenticity markers.",
+          "The confidence score represents how certain our AI is about the content's authenticity. Scores above 90% indicate high confidence, while lower scores may require manual review.",
+          "Our AI is trained on millions of verified and manipulated content samples, allowing it to detect subtle patterns that indicate potential manipulation or misinformation."
+        ],
+        guide: [
+          "Welcome to TruthGuard! 🛡️ Start by uploading content for verification, view results in your dashboard, and export findings to your preferred tools. Our AI handles the complex analysis while you focus on making informed decisions.",
+          "TruthGuard offers three main features: Content Verification (upload and analyze), Analytics Dashboard (track your verification history), and Integration Tools (export to calendar, task managers, etc.).",
+          "New users should start with our demo verification to understand the process, then explore the dashboard to see analytics, and finally check out the subscription options for advanced features."
+        ],
+        practices: [
+          "For best results: 1) Upload high-quality files, 2) Provide context about the content source, 3) Cross-reference with multiple sources, 4) Review flagged items manually, 5) Keep your verification history organized.",
+          "Quality matters! Higher resolution videos, clear audio, and complete documents yield more accurate results. Our AI performs better with uncompressed, original files.",
+          "Always verify the source of your content when possible. Our AI can detect manipulation, but understanding the content's origin adds valuable context to the analysis."
+        ],
+        troubleshooting: [
+          "Common issues include: file format not supported (try converting to MP4/MP3/PDF), file too large (compress or upgrade plan), or slow processing (check internet connection). What specific issue are you experiencing?",
+          "If verification is taking too long, it might be due to high server load or complex content. Try refreshing the page or contact support if the issue persists.",
+          "For upload errors, ensure your file is under the size limit and in a supported format. Clear your browser cache if you continue experiencing issues."
+        ],
+        documentation: [
+          "You can find comprehensive documentation in our Help Center, including video tutorials, API documentation, and integration guides. Would you like me to direct you to a specific section?",
+          "Our documentation covers: Getting Started Guide, API Reference, Integration Tutorials, Troubleshooting, and Best Practices. All are accessible from the main menu.",
+          "For developers, we offer detailed API documentation with code examples, SDKs for popular languages, and webhook integration guides."
+        ],
+        default: [
+          "I'm here to help with any questions about TruthGuard! You can ask me about verification processes, AI analysis, troubleshooting, or general platform guidance.",
+          "That's an interesting question! While I specialize in TruthGuard assistance, I can help you understand how our platform addresses your specific needs.",
+          "I'd be happy to help! Could you provide more details about what you're trying to accomplish? I can offer more targeted guidance that way."
+        ]
+      };
 
-    // Simple keyword matching for demo purposes
-    const lowerMessage = userMessage.toLowerCase();
-    let responseCategory = 'default';
-    
-    if (lowerMessage.includes('verify') || lowerMessage.includes('verification') || lowerMessage.includes('upload')) {
-      responseCategory = 'verification';
-    } else if (lowerMessage.includes('ai') || lowerMessage.includes('analysis') || lowerMessage.includes('confidence')) {
-      responseCategory = 'ai';
-    } else if (lowerMessage.includes('guide') || lowerMessage.includes('start') || lowerMessage.includes('overview') || lowerMessage.includes('new')) {
-      responseCategory = 'guide';
-    } else if (lowerMessage.includes('practice') || lowerMessage.includes('tip') || lowerMessage.includes('best')) {
-      responseCategory = 'practices';
-    } else if (lowerMessage.includes('problem') || lowerMessage.includes('issue') || lowerMessage.includes('error') || lowerMessage.includes('help')) {
-      responseCategory = 'troubleshooting';
-    } else if (lowerMessage.includes('documentation') || lowerMessage.includes('tutorial') || lowerMessage.includes('api')) {
-      responseCategory = 'documentation';
-    }
+      // Simple keyword matching for demo purposes
+      const lowerMessage = userMessage.toLowerCase();
+      let responseCategory = 'default';
+      
+      if (lowerMessage.includes('verify') || lowerMessage.includes('verification') || lowerMessage.includes('upload')) {
+        responseCategory = 'verification';
+      } else if (lowerMessage.includes('ai') || lowerMessage.includes('analysis') || lowerMessage.includes('confidence')) {
+        responseCategory = 'ai';
+      } else if (lowerMessage.includes('guide') || lowerMessage.includes('start') || lowerMessage.includes('overview') || lowerMessage.includes('new')) {
+        responseCategory = 'guide';
+      } else if (lowerMessage.includes('practice') || lowerMessage.includes('tip') || lowerMessage.includes('best')) {
+        responseCategory = 'practices';
+      } else if (lowerMessage.includes('problem') || lowerMessage.includes('issue') || lowerMessage.includes('error') || lowerMessage.includes('help')) {
+        responseCategory = 'troubleshooting';
+      } else if (lowerMessage.includes('documentation') || lowerMessage.includes('tutorial') || lowerMessage.includes('api')) {
+        responseCategory = 'documentation';
+      }
 
-    const categoryResponses = responses[responseCategory];
-    const response = categoryResponses[Math.floor(Math.random() * categoryResponses.length)];
-    
-    setIsTyping(false);
-    
-    const botMessage = {
-      id: Date.now(),
-      type: 'bot',
-      content: response,
-      timestamp: new Date(),
-      avatar: personalities[personality].avatar
-    };
-    
-    setMessages(prev => [...prev, botMessage]);
+      const categoryResponses = responses[responseCategory];
+      const response = categoryResponses[Math.floor(Math.random() * categoryResponses.length)];
+      
+      const botMessage = {
+        id: Date.now(),
+        type: 'bot',
+        content: response,
+        timestamp: new Date(),
+        avatar: personalities[personality].avatar
+      };
+      
+      setMessages(prev => [...prev, botMessage]);
 
-    // Text-to-speech if enabled
-    if (voiceEnabled && 'speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(response);
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-      speechSynthesis.speak(utterance);
+      // Text-to-speech if enabled
+      if (voiceEnabled && 'speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(response);
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        speechSynthesis.speak(utterance);
+      }
+
+      toast({
+        title: "Response Generated",
+        description: "AI assistant has responded to your query",
+        variant: "success"
+      });
+
+    } catch (error) {
+      console.error('Error generating response:', error);
+      const errorMessage = {
+        id: Date.now(),
+        type: 'bot',
+        content: "I apologize, but I'm experiencing some technical difficulties. Please try again in a moment.",
+        timestamp: new Date(),
+        avatar: personalities[personality].avatar
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      
+      toast({
+        title: "Response Error",
+        description: "Failed to generate response. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsTyping(false);
+      setIsProcessing(false);
     }
   };
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isProcessing) return;
 
     const userMessage = {
       id: Date.now(),
@@ -215,12 +254,14 @@ const ChatbotAssistant = ({ user }) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageToProcess = inputMessage;
     setInputMessage('');
 
-    await generateBotResponse(inputMessage);
+    await generateBotResponse(messageToProcess);
   };
 
   const handleQuickAction = (action) => {
+    if (isProcessing) return;
     setInputMessage(action.message);
     setTimeout(() => {
       handleSendMessage();
@@ -228,44 +269,62 @@ const ChatbotAssistant = ({ user }) => {
   };
 
   const startVoiceInput = () => {
+    if (isListening || isProcessing) return;
+
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
+      recognitionRef.current = new SpeechRecognition();
       
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
       
-      recognition.onstart = () => {
+      recognitionRef.current.onstart = () => {
         setIsListening(true);
+        toast({
+          title: "Listening...",
+          description: "Speak your message now",
+        });
       };
       
-      recognition.onresult = (event) => {
+      recognitionRef.current.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         setInputMessage(transcript);
         setIsListening(false);
+        toast({
+          title: "Voice Input Captured",
+          description: "Message ready to send",
+          variant: "success"
+        });
       };
       
-      recognition.onerror = () => {
+      recognitionRef.current.onerror = (event) => {
         setIsListening(false);
         toast({
-          title: "Voice input error",
-          description: "Could not access microphone",
+          title: "Voice Input Error",
+          description: "Could not access microphone or recognize speech",
           variant: "destructive"
         });
       };
       
-      recognition.onend = () => {
+      recognitionRef.current.onend = () => {
         setIsListening(false);
       };
       
-      recognition.start();
+      recognitionRef.current.start();
     } else {
       toast({
-        title: "Voice input not supported",
+        title: "Voice Input Not Supported",
         description: "Your browser doesn't support voice input",
         variant: "destructive"
       });
+    }
+  };
+
+  const stopVoiceInput = () => {
+    if (recognitionRef.current && isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
     }
   };
 
@@ -279,6 +338,10 @@ const ChatbotAssistant = ({ user }) => {
         avatar: personalities[personality].avatar
       }
     ]);
+    toast({
+      title: "Chat Cleared",
+      description: "Conversation history has been reset",
+    });
   };
 
   if (!isOpen) {
@@ -291,6 +354,7 @@ const ChatbotAssistant = ({ user }) => {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
+        aria-label="Open AI Assistant"
       >
         <MessageCircle className="h-8 w-8 text-white group-hover:scale-110 transition-transform" />
         <motion.div
@@ -330,6 +394,7 @@ const ChatbotAssistant = ({ user }) => {
           <button
             onClick={() => setIsMinimized(!isMinimized)}
             className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            aria-label={isMinimized ? "Maximize" : "Minimize"}
           >
             {isMinimized ? (
               <Maximize2 className="h-4 w-4 text-white" />
@@ -340,6 +405,7 @@ const ChatbotAssistant = ({ user }) => {
           <button
             onClick={() => setIsOpen(false)}
             className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+            aria-label="Close"
           >
             <X className="h-4 w-4 text-white" />
           </button>
@@ -355,7 +421,7 @@ const ChatbotAssistant = ({ user }) => {
                 <select
                   value={personality}
                   onChange={(e) => setPersonality(e.target.value)}
-                  className="text-xs bg-transparent border border-stardust-300 dark:border-deep-space-600 rounded px-2 py-1"
+                  className="text-xs bg-transparent border border-stardust-300 dark:border-deep-space-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-electric-teal-500"
                 >
                   {Object.entries(personalities).map(([key, p]) => (
                     <option key={key} value={key}>{p.name}</option>
@@ -365,13 +431,15 @@ const ChatbotAssistant = ({ user }) => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setVoiceEnabled(!voiceEnabled)}
-                  className={`p-1 rounded ${voiceEnabled ? 'text-green-600' : 'text-gray-400'}`}
+                  className={`p-1 rounded transition-colors ${voiceEnabled ? 'text-green-600' : 'text-gray-400'}`}
+                  title={voiceEnabled ? "Disable voice output" : "Enable voice output"}
                 >
                   {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
                 </button>
                 <button
                   onClick={clearChat}
-                  className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                  className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                  title="Clear chat"
                 >
                   <RefreshCw className="h-4 w-4" />
                 </button>
@@ -399,7 +467,7 @@ const ChatbotAssistant = ({ user }) => {
                         ? 'bg-gradient-to-r from-cosmic-purple-500 to-electric-teal-500 text-white'
                         : 'bg-stardust-100 dark:bg-deep-space-700 text-deep-space-900 dark:text-stardust-50'
                     }`}>
-                      <p className="text-sm">{message.content}</p>
+                      <p className="text-sm leading-relaxed">{message.content}</p>
                     </div>
                     <p className="text-xs text-stardust-500 dark:text-deep-space-400 mt-1">
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -439,9 +507,10 @@ const ChatbotAssistant = ({ user }) => {
                   <button
                     key={index}
                     onClick={() => handleQuickAction(action)}
-                    className="flex items-center gap-2 p-2 text-xs bg-stardust-100 dark:bg-deep-space-700 hover:bg-stardust-200 dark:hover:bg-deep-space-600 rounded-lg transition-colors"
+                    disabled={isProcessing}
+                    className="flex items-center gap-2 p-2 text-xs bg-stardust-100 dark:bg-deep-space-700 hover:bg-stardust-200 dark:hover:bg-deep-space-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Icon className="h-3 w-3" />
+                    <Icon className="h-3 w-3 flex-shrink-0" />
                     <span className="truncate">{action.label}</span>
                   </button>
                 );
@@ -457,27 +526,34 @@ const ChatbotAssistant = ({ user }) => {
                 type="text"
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                onKeyPress={(e) => e.key === 'Enter' && !isProcessing && handleSendMessage()}
                 placeholder="Ask me anything about TruthGuard..."
-                className="flex-1 px-3 py-2 bg-stardust-100 dark:bg-deep-space-700 border border-stardust-300 dark:border-deep-space-600 rounded-lg focus:ring-2 focus:ring-electric-teal-500 focus:border-transparent text-sm"
+                disabled={isProcessing}
+                className="flex-1 px-3 py-2 bg-stardust-100 dark:bg-deep-space-700 border border-stardust-300 dark:border-deep-space-600 rounded-lg focus:ring-2 focus:ring-electric-teal-500 focus:border-transparent text-sm disabled:opacity-50"
               />
               <button
-                onClick={startVoiceInput}
-                disabled={isListening}
+                onClick={isListening ? stopVoiceInput : startVoiceInput}
+                disabled={isProcessing}
                 className={`p-2 rounded-lg transition-colors ${
                   isListening 
-                    ? 'bg-red-500 text-white' 
+                    ? 'bg-red-500 text-white hover:bg-red-600' 
                     : 'bg-stardust-200 dark:bg-deep-space-600 hover:bg-stardust-300 dark:hover:bg-deep-space-500'
-                }`}
+                } disabled:opacity-50`}
+                title={isListening ? "Stop voice input" : "Start voice input"}
               >
-                <Mic className={`h-4 w-4 ${isListening ? 'animate-pulse' : ''}`} />
+                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </button>
               <button
                 onClick={handleSendMessage}
-                disabled={!inputMessage.trim()}
+                disabled={!inputMessage.trim() || isProcessing}
                 className="p-2 bg-gradient-to-r from-cosmic-purple-500 to-electric-teal-500 text-white rounded-lg hover:from-cosmic-purple-600 hover:to-electric-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                title="Send message"
               >
-                <Send className="h-4 w-4" />
+                {isProcessing ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
               </button>
             </div>
           </div>
