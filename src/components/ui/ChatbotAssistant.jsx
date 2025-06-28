@@ -214,12 +214,6 @@ const ChatbotAssistant = ({ user }) => {
         speechSynthesis.speak(utterance);
       }
 
-      toast({
-        title: "Response Generated",
-        description: "AI assistant has responded to your query",
-        variant: "success"
-      });
-
     } catch (error) {
       console.error('Error generating response:', error);
       const errorMessage = {
@@ -230,12 +224,6 @@ const ChatbotAssistant = ({ user }) => {
         avatar: personalities[personality].avatar
       };
       setMessages(prev => [...prev, errorMessage]);
-      
-      toast({
-        title: "Response Error",
-        description: "Failed to generate response. Please try again.",
-        variant: "destructive"
-      });
     } finally {
       setIsTyping(false);
       setIsProcessing(false);
@@ -281,21 +269,12 @@ const ChatbotAssistant = ({ user }) => {
       
       recognitionRef.current.onstart = () => {
         setIsListening(true);
-        toast({
-          title: "Listening...",
-          description: "Speak your message now",
-        });
       };
       
       recognitionRef.current.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         setInputMessage(transcript);
         setIsListening(false);
-        toast({
-          title: "Voice Input Captured",
-          description: "Message ready to send",
-          variant: "success"
-        });
       };
       
       recognitionRef.current.onerror = (event) => {
@@ -338,10 +317,6 @@ const ChatbotAssistant = ({ user }) => {
         avatar: personalities[personality].avatar
       }
     ]);
-    toast({
-      title: "Chat Cleared",
-      description: "Conversation history has been reset",
-    });
   };
 
   if (!isOpen) {
@@ -379,17 +354,25 @@ const ChatbotAssistant = ({ user }) => {
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
     >
-      {/* Header */}
+      {/* Header - Always visible */}
       <div className={`bg-gradient-to-r ${personalities[personality].color} p-4 flex items-center justify-between`}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
             <span className="text-xl">{personalities[personality].avatar}</span>
           </div>
-          <div className="text-white">
-            <h3 className="font-semibold">TruthGuard Assistant</h3>
-            <p className="text-xs opacity-90">{personalities[personality].description}</p>
-          </div>
+          {!isMinimized && (
+            <div className="text-white">
+              <h3 className="font-semibold">TruthGuard Assistant</h3>
+              <p className="text-xs opacity-90">{personalities[personality].description}</p>
+            </div>
+          )}
+          {isMinimized && (
+            <div className="text-white">
+              <h3 className="font-semibold text-sm">TruthGuard Assistant</h3>
+            </div>
+          )}
         </div>
+        {/* Control buttons - Always visible */}
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsMinimized(!isMinimized)}
@@ -412,6 +395,7 @@ const ChatbotAssistant = ({ user }) => {
         </div>
       </div>
 
+      {/* Content - Only visible when not minimized */}
       {!isMinimized && (
         <>
           {/* Settings Bar */}
