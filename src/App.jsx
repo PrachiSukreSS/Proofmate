@@ -13,7 +13,7 @@ import HomePage from "./pages/HomePage";
 import DashboardPage from "./pages/DashboardPage";
 import VerificationPage from "./pages/VerificationPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
-import SubscriptionPage from "./pages/SubscriptionPage";
+import PremiumPage from "./pages/PremiumPage";
 import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 
@@ -64,7 +64,7 @@ function App() {
                   <Route path="/dashboard" element={<DashboardPage user={user} />} />
                   <Route path="/verify" element={<VerificationPage user={user} />} />
                   <Route path="/analytics" element={<AnalyticsPage user={user} />} />
-                  <Route path="/subscription" element={<SubscriptionPage user={user} />} />
+                  <Route path="/subscription" element={<PremiumPage user={user} />} />
                   <Route path="/profile" element={<ProfilePage user={user} />} />
                   <Route path="/login" element={<LoginPage />} />
                 </Routes>
