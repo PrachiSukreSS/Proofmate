@@ -13,6 +13,8 @@ import {
   FileText,
   BarChart3
 } from "lucide-react";
+import InteractiveCard3D from "../components/ui/InteractiveCard3D";
+import ParallaxSection from "../components/ui/ParallaxSection";
 
 const HomePage = ({ user }) => {
   const navigate = useNavigate();
@@ -68,7 +70,7 @@ const HomePage = ({ user }) => {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-20">
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ParallaxSection speed={0.2} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-8">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -109,7 +111,7 @@ const HomePage = ({ user }) => {
               </button>
             </motion.div>
           </div>
-        </div>
+        </ParallaxSection>
       </section>
 
       {/* Stats Section */}
@@ -165,19 +167,26 @@ const HomePage = ({ user }) => {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="card p-8 hover:shadow-xl transition-all duration-300 group"
                 >
-                  <div className="space-y-4">
-                    <div className={`w-12 h-12 bg-gradient-to-r ${feature.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                      <Icon className="h-6 w-6 text-white" />
+                  <InteractiveCard3D
+                    className="h-full"
+                    glowEffect={true}
+                    intensity={10}
+                  >
+                    <div className="card p-8 h-full hover:shadow-xl transition-all duration-300 group">
+                      <div className="space-y-4">
+                        <div className={`w-12 h-12 bg-gradient-to-r ${feature.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                          <Icon className="h-6 w-6 text-white" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                          {feature.title}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300">
+                          {feature.description}
+                        </p>
+                      </div>
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                      {feature.title}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      {feature.description}
-                    </p>
-                  </div>
+                  </InteractiveCard3D>
                 </motion.div>
               );
             })}
