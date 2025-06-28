@@ -6,14 +6,12 @@ import Toast from "./components/Toast";
 import LoadingScreen from "./components/LoadingScreen";
 import { supabase } from "./utils/supabaseClient";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 
 // Pages
 import HomePage from "./pages/HomePage";
 import DashboardPage from "./pages/DashboardPage";
 import VerificationPage from "./pages/VerificationPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
-import PremiumPage from "./pages/PremiumPage";
 import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 
@@ -39,7 +37,6 @@ function App() {
     // Listen to auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
         setUser(session?.user || null);
         setIsLoading(false);
       }
@@ -54,26 +51,23 @@ function App() {
 
   return (
     <ThemeProvider>
-      <SubscriptionProvider>
-        <Router>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-            <Layout user={user}>
-              <AnimatePresence mode="wait">
-                <Routes>
-                  <Route path="/" element={<HomePage user={user} />} />
-                  <Route path="/dashboard" element={<DashboardPage user={user} />} />
-                  <Route path="/verify" element={<VerificationPage user={user} />} />
-                  <Route path="/analytics" element={<AnalyticsPage user={user} />} />
-                  <Route path="/subscription" element={<PremiumPage user={user} />} />
-                  <Route path="/profile" element={<ProfilePage user={user} />} />
-                  <Route path="/login" element={<LoginPage />} />
-                </Routes>
-              </AnimatePresence>
-            </Layout>
-            <Toast />
-          </div>
-        </Router>
-      </SubscriptionProvider>
+      <Router>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+          <Layout user={user}>
+            <AnimatePresence mode="wait">
+              <Routes>
+                <Route path="/" element={<HomePage user={user} />} />
+                <Route path="/dashboard" element={<DashboardPage user={user} />} />
+                <Route path="/verify" element={<VerificationPage user={user} />} />
+                <Route path="/analytics" element={<AnalyticsPage user={user} />} />
+                <Route path="/profile" element={<ProfilePage user={user} />} />
+                <Route path="/login" element={<LoginPage />} />
+              </Routes>
+            </AnimatePresence>
+          </Layout>
+          <Toast />
+        </div>
+      </Router>
     </ThemeProvider>
   );
 }

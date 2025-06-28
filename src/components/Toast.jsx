@@ -40,7 +40,7 @@ const Toast = () => {
       {toasts.length > 1 && (
         <motion.button
           onClick={dismissAll}
-          className="w-full text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1 transition-colors"
+          className="w-full text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1 transition-colors"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -61,7 +61,7 @@ const Toast = () => {
               damping: 30,
               duration: 0.3 
             }}
-            className={`shadow-lg rounded-xl border p-4 backdrop-blur-sm ${getStyles(toast.variant)}`}
+            className={`shadow-lg rounded-xl border p-4 ${getStyles(toast.variant)}`}
           >
             <div className="flex items-start gap-3">
               {getIcon(toast.variant)}
@@ -87,7 +87,7 @@ const Toast = () => {
               className="absolute bottom-0 left-0 h-1 bg-current opacity-30 rounded-b-xl"
               initial={{ width: "100%" }}
               animate={{ width: "0%" }}
-              transition={{ duration: 4, ease: "linear" }}
+              transition={{ duration: 3, ease: "linear" }}
             />
           </motion.div>
         ))}
