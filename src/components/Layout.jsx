@@ -81,6 +81,7 @@ const Layout = ({ children, user }) => {
         </motion.button>
       )}
     </div>
+  )
   );
 };
 
