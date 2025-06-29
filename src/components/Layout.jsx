@@ -27,8 +27,8 @@ const Layout = ({ children, user, sessionInfo }) => {
       </motion.main>
 
       {/* Interactive Components */}
-      <ChatbotAssistant user={user} />
-      {user && sessionInfo && <SessionMonitor sessionInfo={sessionInfo} />}
+      {user && <ChatbotAssistant user={user} />}
+      {user && sessionInfo && sessionInfo.isValid && <SessionMonitor sessionInfo={sessionInfo} />}
     </div>
   );
 };
