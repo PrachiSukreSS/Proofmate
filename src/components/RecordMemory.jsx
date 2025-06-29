@@ -30,6 +30,28 @@ import {
   exportToTodoist,
 } from "../utils/integrationManager";
 import { useToast } from "../hooks/use-toast";
+// RevenueCat
+import {
+  getSubscriptionStatus,
+  purchaseSubscription,
+  restorePurchases,
+} from "../utils/revenueCatClient";
+
+// ElevenLabs
+import {
+  processWithElevenLabs,
+  synthesizeVoice,
+} from "../utils/elevenlabsClient";
+
+// Algorand
+import { verifyWithAlgorand } from "../utils/algorandClient";
+
+// Tavus
+import {
+  analyzeWithTavus,
+  generatePersonalizedVideo,
+} from "../utils/tavusClient";
+
 
 const RecordMemory = ({ onBack }) => {
   const [transcript, setTranscript] = useState("");
@@ -96,6 +118,64 @@ const RecordMemory = ({ onBack }) => {
       }
     };
   }, [recognitionInstance]);
+
+  const checkUserAccess = async () => {
+  const status = await getSubscriptionStatus();
+  console.log("User Plan:", status.tier);
+  return status;
+};
+const analyzeAudio = async (audioBlob) => {
+  const analysis = await processWithElevenLabs(audioBlob);
+  if (analysis.success) {
+    console.log("Voice Analysis Result:", analysis);
+  } else {
+    alert("Voice analysis failed!");
+  }
+};
+const synthesize = async () => {
+  const result = await synthesizeVoice("Hello Prachi, you're doing amazing!", "SAz9YHcvj6GTRTYXdXww");
+  if (result.success) {
+    window.open(result.audioUrl, "_blank");
+  }
+};const analyzeVideo = async (videoFile) => {
+  const result = await analyzeWithTavus(videoFile);
+  if (result.success) {
+    console.log("Video Deepfake Result:", result.deepfakeResult);
+  } else {
+    alert("Video analysis failed!");
+  }
+};
+const generateVideo = async () => {
+  const response = await generatePersonalizedVideo("Hi Prachi! You're glowing like the dawn 🌅");
+  if (response.success) {
+    window.open(response.videoUrl, "_blank");
+  }
+};
+const verifyOnBlockchain = async (data) => {
+  const result = await verifyWithAlgorand(data);
+  if (result.success) {
+    console.log("Blockchain Verification:", result);
+  } else {
+    alert("Verification on Algorand failed!");
+  }
+};
+const handleSaveMemory = async (audioFile, videoFile, memoryData) => {
+  const access = await checkUserAccess();
+  if (!access.isActive) {
+    alert("Your subscription is inactive. Please upgrade.");
+    return;
+  }
+
+  await analyzeAudio(audioFile);
+  await analyzeVideo(videoFile);
+  await verifyOnBlockchain(memoryData);
+
+  // Optional:
+  // await synthesize();
+  // await generateVideo();
+};
+
+
 
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -407,6 +487,7 @@ const RecordMemory = ({ onBack }) => {
       setIsSaving(false);
     }
   };
+  
 
   const handleQuickExport = async (type) => {
     if (!summaryData?.actionItems?.length) {
