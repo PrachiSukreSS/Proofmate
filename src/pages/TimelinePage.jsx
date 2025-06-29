@@ -22,7 +22,6 @@ import {
   Mic,
   Play,
   Pause,
-  Eye,
   Edit3,
   Trash2
 } from "lucide-react";
@@ -370,7 +369,7 @@ const TimelinePage = ({ user }) => {
         </p>
         {!searchQuery && (
           <button
-            onClick={() => navigate("/record")}
+            onClick={() => navigate("/")}
             className="mt-4 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 px-6 py-3 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105"
           >
             Create Your First Memory

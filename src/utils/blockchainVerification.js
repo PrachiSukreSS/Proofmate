@@ -1,9 +1,10 @@
 /**
  * Enhanced Blockchain Verification Utility
- * Simulates blockchain hash verification for memory integrity
+ * Integrates with Algorand for real blockchain verification
  */
 
 import { supabase } from "./supabaseClient";
+import { verifyWithAlgorand } from "./algorandClient";
 
 // Simulate blockchain network
 const MOCK_BLOCKCHAIN = {
@@ -117,24 +118,33 @@ export const verifyMemoryIntegrity = async (memoryId, storedHash) => {
 };
 
 /**
- * Store memory with blockchain verification
+ * Store memory with blockchain verification using Algorand
  */
 export const storeVerifiedMemory = async (memoryData) => {
   try {
     // Generate blockchain hash
     const hash = await generateMemoryHash(memoryData);
 
+    // Verify on Algorand blockchain
+    const algorandResult = await verifyWithAlgorand({
+      type: "memory_verification",
+      hash,
+      title: memoryData.title,
+      timestamp: new Date().toISOString(),
+      user_id: memoryData.user_id
+    });
+
     // Create blockchain block
     const block = await createMemoryBlock(memoryData, hash);
 
-    // Store in database with hash and new fields
+    // Store in database with hash and verification info
     const { data, error } = await supabase
       .from("memories")
       .insert([
         {
           ...memoryData,
-          blockchain_hash: hash,
-          verification_status: "verified",
+          blockchain_hash: algorandResult.success ? algorandResult.hash : hash,
+          verification_status: algorandResult.success ? "verified" : "pending",
         },
       ])
       .select()
@@ -145,8 +155,10 @@ export const storeVerifiedMemory = async (memoryData) => {
     return {
       memory: data,
       block,
-      hash,
-      verified: true,
+      hash: algorandResult.success ? algorandResult.hash : hash,
+      verified: algorandResult.success,
+      algorandTxId: algorandResult.success ? algorandResult.transactionId : null,
+      explorer: algorandResult.success ? algorandResult.explorer : null,
     };
   } catch (error) {
     console.error("Error storing verified memory:", error);

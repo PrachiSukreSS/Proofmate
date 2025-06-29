@@ -84,6 +84,70 @@ export const processWithOpenAI = async (content, type = 'general') => {
   }
 };
 
+export const searchMemoriesWithAI = async (query, memories) => {
+  try {
+    const client = getOpenAIClient();
+    
+    if (!client) {
+      // Fallback to enhanced text search
+      return memories.filter(memory => {
+        const searchText = `${memory.title} ${memory.summary} ${memory.transcript} ${memory.tags?.join(' ')}`.toLowerCase();
+        return searchText.includes(query.toLowerCase());
+      });
+    }
+
+    // Use AI for semantic search
+    const searchPrompt = `
+Given this search query: "${query}"
+
+Find the most relevant memories from this list based on semantic similarity and context:
+
+${memories.map((memory, index) => `
+${index + 1}. Title: ${memory.title}
+   Summary: ${memory.summary}
+   Tags: ${memory.tags?.join(', ') || 'none'}
+`).join('\n')}
+
+Return only the numbers of the most relevant memories (up to 10), separated by commas.
+If no memories are relevant, return "none".
+`;
+
+    const completion = await client.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        {
+          role: "system",
+          content: "You are a semantic search assistant. Analyze the query and return the most relevant memory indices."
+        },
+        {
+          role: "user",
+          content: searchPrompt
+        }
+      ],
+      temperature: 0.1,
+      max_tokens: 100,
+    });
+
+    const response = completion.choices[0].message.content.trim();
+    
+    if (response.toLowerCase() === 'none') {
+      return [];
+    }
+
+    const indices = response.split(',').map(num => parseInt(num.trim()) - 1).filter(index => !isNaN(index) && index >= 0 && index < memories.length);
+    
+    return indices.map(index => memories[index]);
+
+  } catch (error) {
+    console.error('AI search error:', error);
+    // Fallback to basic search
+    return memories.filter(memory => {
+      const searchText = `${memory.title} ${memory.summary} ${memory.transcript} ${memory.tags?.join(' ')}`.toLowerCase();
+      return searchText.includes(query.toLowerCase());
+    });
+  }
+};
+
 const buildPrompt = (transcript, context) => {
   const contextInstructions = {
     general: "Analyze this general voice recording for key insights and actionable items.",
@@ -312,68 +376,4 @@ const mockVerificationAnalysis = (content, type) => {
     verification_notes: `Automated analysis using ${type} protocols. Confidence score: ${Math.round(confidence * 100)}%`,
     original_content: content.substring(0, 500)
   };
-};
-
-export const searchMemoriesWithAI = async (query, memories) => {
-  try {
-    const client = getOpenAIClient();
-    
-    if (!client) {
-      // Fallback to enhanced text search
-      return memories.filter(memory => {
-        const searchText = `${memory.title} ${memory.summary} ${memory.transcript} ${memory.tags?.join(' ')}`.toLowerCase();
-        return searchText.includes(query.toLowerCase());
-      });
-    }
-
-    // Use AI for semantic search
-    const searchPrompt = `
-Given this search query: "${query}"
-
-Find the most relevant memories from this list based on semantic similarity and context:
-
-${memories.map((memory, index) => `
-${index + 1}. Title: ${memory.title}
-   Summary: ${memory.summary}
-   Tags: ${memory.tags?.join(', ') || 'none'}
-`).join('\n')}
-
-Return only the numbers of the most relevant memories (up to 10), separated by commas.
-If no memories are relevant, return "none".
-`;
-
-    const completion = await client.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "system",
-          content: "You are a semantic search assistant. Analyze the query and return the most relevant memory indices."
-        },
-        {
-          role: "user",
-          content: searchPrompt
-        }
-      ],
-      temperature: 0.1,
-      max_tokens: 100,
-    });
-
-    const response = completion.choices[0].message.content.trim();
-    
-    if (response.toLowerCase() === 'none') {
-      return [];
-    }
-
-    const indices = response.split(',').map(num => parseInt(num.trim()) - 1).filter(index => !isNaN(index) && index >= 0 && index < memories.length);
-    
-    return indices.map(index => memories[index]);
-
-  } catch (error) {
-    console.error('AI search error:', error);
-    // Fallback to basic search
-    return memories.filter(memory => {
-      const searchText = `${memory.title} ${memory.summary} ${memory.transcript} ${memory.tags?.join(' ')}`.toLowerCase();
-      return searchText.includes(query.toLowerCase());
-    });
-  }
 };

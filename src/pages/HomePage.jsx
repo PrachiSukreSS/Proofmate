@@ -17,9 +17,11 @@ import {
   Star,
   Award
 } from "lucide-react";
+import RecordMemory from "../components/RecordMemory";
 
 const HomePage = ({ user }) => {
   const navigate = useNavigate();
+  const [showRecordMemory, setShowRecordMemory] = React.useState(false);
 
   const features = [
     {
@@ -88,6 +90,10 @@ const HomePage = ({ user }) => {
     }
   ];
 
+  if (showRecordMemory) {
+    return <RecordMemory onBack={() => setShowRecordMemory(false)} user={user} />;
+  }
+
   return (
     <div className="space-y-20">
       {/* Hero Section */}
@@ -125,7 +131,7 @@ const HomePage = ({ user }) => {
           className="flex flex-col sm:flex-row gap-4 justify-center items-center"
         >
           <motion.button
-            onClick={() => navigate(user ? '/record' : '/login')}
+            onClick={() => user ? setShowRecordMemory(true) : navigate('/login')}
             className="group bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -375,7 +381,7 @@ const HomePage = ({ user }) => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <motion.button
-              onClick={() => navigate(user ? '/record' : '/login')}
+              onClick={() => user ? setShowRecordMemory(true) : navigate('/login')}
               className="bg-white text-purple-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-50 transition-all duration-300 shadow-lg flex items-center justify-center gap-2"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

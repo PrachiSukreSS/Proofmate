@@ -20,40 +20,33 @@ import {
   Upload,
   Download,
   Pause,
+  Save,
+  X,
+  Video,
+  Headphones,
+  Blockchain,
+  Crown,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  BarChart3,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../utils/supabaseClient";
-import { processTranscriptWithAI } from "../utils/aiProcessor";
+import { processTranscriptWithOpenAI } from "../utils/openaiProcessor";
 import { storeVerifiedMemory } from "../utils/blockchainVerification";
 import {
   exportToGoogleCalendar,
   exportToTodoist,
+  processAudioWithElevenLabs,
+  generateVoiceWithElevenLabs,
+  processVideoWithTavus,
+  verifyContentWithAlgorand,
+  getUserSubscriptionStatus,
 } from "../utils/integrationManager";
 import { useToast } from "../hooks/use-toast";
-// RevenueCat
-import {
-  getSubscriptionStatus,
-  purchaseSubscription,
-  restorePurchases,
-} from "../utils/revenueCatClient";
 
-// ElevenLabs
-import {
-  processWithElevenLabs,
-  synthesizeVoice,
-} from "../utils/elevenlabsClient";
-
-// Algorand
-import { verifyWithAlgorand } from "../utils/algorandClient";
-
-// Tavus
-import {
-  analyzeWithTavus,
-  generatePersonalizedVideo,
-} from "../utils/tavusClient";
-
-
-const RecordMemory = ({ onBack }) => {
+const RecordMemory = ({ onBack, user }) => {
   const [transcript, setTranscript] = useState("");
   const [liveTranscript, setLiveTranscript] = useState("");
   const [summaryData, setSummaryData] = useState(null);
@@ -73,14 +66,36 @@ const RecordMemory = ({ onBack }) => {
   const [wordCount, setWordCount] = useState(0);
   const [confidence, setConfidence] = useState(0);
   const [audioBlob, setAudioBlob] = useState(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [processingSteps, setProcessingSteps] = useState([]);
+  const [currentStep, setCurrentStep] = useState(0);
 
   const mediaRecorderRef = useRef(null);
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
   const animationFrameRef = useRef(null);
+  const streamRef = useRef(null);
 
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const categories = [
+    "general",
+    "work",
+    "personal",
+    "meeting",
+    "brainstorm",
+    "interview",
+    "learning",
+    "shopping",
+    "health",
+  ];
+
+  // Load subscription status
+  useEffect(() => {
+    loadSubscriptionStatus();
+  }, []);
 
   // Timer for recording duration
   useEffect(() => {
@@ -104,6 +119,17 @@ const RecordMemory = ({ onBack }) => {
     setWordCount(words.length);
   }, [transcript]);
 
+  // Auto-save functionality
+  useEffect(() => {
+    if (autoSave && transcript && wordCount > 10) {
+      const autoSaveTimer = setTimeout(() => {
+        handleQuickSave();
+      }, 30000); // Auto-save every 30 seconds
+
+      return () => clearTimeout(autoSaveTimer);
+    }
+  }, [transcript, wordCount, autoSave]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -113,69 +139,130 @@ const RecordMemory = ({ onBack }) => {
       if (mediaRecorderRef.current) {
         mediaRecorderRef.current.stop();
       }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
   }, [recognitionInstance]);
 
-  const checkUserAccess = async () => {
-  const status = await getSubscriptionStatus();
-  console.log("User Plan:", status.tier);
-  return status;
-};
-const analyzeAudio = async (audioBlob) => {
-  const analysis = await processWithElevenLabs(audioBlob);
-  if (analysis.success) {
-    console.log("Voice Analysis Result:", analysis);
-  } else {
-    alert("Voice analysis failed!");
-  }
-};
-const synthesize = async () => {
-  const result = await synthesizeVoice("Hello Prachi, you're doing amazing!", "SAz9YHcvj6GTRTYXdXww");
-  if (result.success) {
-    window.open(result.audioUrl, "_blank");
-  }
-};const analyzeVideo = async (videoFile) => {
-  const result = await analyzeWithTavus(videoFile);
-  if (result.success) {
-    console.log("Video Deepfake Result:", result.deepfakeResult);
-  } else {
-    alert("Video analysis failed!");
-  }
-};
-const generateVideo = async () => {
-  const response = await generatePersonalizedVideo("Hi Prachi! You're glowing like the dawn 🌅");
-  if (response.success) {
-    window.open(response.videoUrl, "_blank");
-  }
-};
-const verifyOnBlockchain = async (data) => {
-  const result = await verifyWithAlgorand(data);
-  if (result.success) {
-    console.log("Blockchain Verification:", result);
-  } else {
-    alert("Verification on Algorand failed!");
-  }
-};
-const handleSaveMemory = async (audioFile, videoFile, memoryData) => {
-  const access = await checkUserAccess();
-  if (!access.isActive) {
-    alert("Your subscription is inactive. Please upgrade.");
-    return;
-  }
+  const loadSubscriptionStatus = async () => {
+    try {
+      const status = await getUserSubscriptionStatus(user?.id);
+      setSubscriptionStatus(status);
+    } catch (error) {
+      console.error("Error loading subscription status:", error);
+      setSubscriptionStatus({ tier: "free", isActive: false });
+    }
+  };
 
-  await analyzeAudio(audioFile);
-  await analyzeVideo(videoFile);
-  await verifyOnBlockchain(memoryData);
+  const checkPremiumFeature = (feature) => {
+    if (!subscriptionStatus?.isActive || subscriptionStatus?.tier === "free") {
+      toast({
+        title: "Premium Feature",
+        description: `${feature} requires a premium subscription`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
 
-  // Optional:
-  // await synthesize();
-  // await generateVideo();
-};
+  const updateProcessingStep = (step, status = "processing") => {
+    setProcessingSteps((prev) => {
+      const newSteps = [...prev];
+      const existingIndex = newSteps.findIndex((s) => s.name === step);
+      
+      if (existingIndex >= 0) {
+        newSteps[existingIndex].status = status;
+      } else {
+        newSteps.push({ name: step, status });
+      }
+      
+      return newSteps;
+    });
+  };
 
+  const analyzeAudio = async (audioBlob) => {
+    if (!checkPremiumFeature("Audio analysis")) return;
 
+    updateProcessingStep("ElevenLabs Audio Analysis", "processing");
+    
+    try {
+      const analysis = await processAudioWithElevenLabs(audioBlob);
+      if (analysis.success) {
+        updateProcessingStep("ElevenLabs Audio Analysis", "completed");
+        console.log("Voice Analysis Result:", analysis);
+        toast({
+          title: "Audio Analysis Complete",
+          description: "Voice characteristics analyzed successfully",
+        });
+        return analysis;
+      } else {
+        updateProcessingStep("ElevenLabs Audio Analysis", "failed");
+        throw new Error(analysis.error);
+      }
+    } catch (error) {
+      updateProcessingStep("ElevenLabs Audio Analysis", "failed");
+      toast({
+        title: "Analysis Failed",
+        description: "Voice analysis could not be completed",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const synthesizeVoice = async (text) => {
+    if (!checkPremiumFeature("Voice synthesis")) return;
+
+    try {
+      const result = await generateVoiceWithElevenLabs(
+        text || "Your recording has been processed successfully!",
+        "SAz9YHcvj6GTRTYXdXww"
+      );
+      if (result.success) {
+        const audio = new Audio(result.audioUrl);
+        audio.play();
+        toast({
+          title: "Voice Synthesis Complete",
+          description: "Generated voice message is playing",
+        });
+      }
+    } catch (error) {
+      console.error("Voice synthesis error:", error);
+    }
+  };
+
+  const verifyOnBlockchain = async (data) => {
+    updateProcessingStep("Algorand Blockchain Verification", "processing");
+    
+    try {
+      const result = await verifyContentWithAlgorand(data);
+      if (result.success) {
+        updateProcessingStep("Algorand Blockchain Verification", "completed");
+        console.log("Blockchain Verification:", result);
+        toast({
+          title: "Blockchain Verification Complete",
+          description: "Memory verified on Algorand blockchain",
+        });
+        return result;
+      } else {
+        updateProcessingStep("Algorand Blockchain Verification", "failed");
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      updateProcessingStep("Algorand Blockchain Verification", "failed");
+      toast({
+        title: "Verification Failed",
+        description: "Blockchain verification could not be completed",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
 
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -192,6 +279,8 @@ const handleSaveMemory = async (audioFile, videoFile, memoryData) => {
           sampleRate: recordingQuality === "high" ? 48000 : 16000,
         },
       });
+
+      streamRef.current = stream;
 
       audioContextRef.current = new (window.AudioContext ||
         window.webkitAudioContext)();
@@ -252,163 +341,156 @@ const handleSaveMemory = async (audioFile, videoFile, memoryData) => {
       toast({
         title: "Browser Not Supported",
         description:
-          "Your browser does not support Speech Recognition. Please use Chrome or Edge.",
+          "Your browser does not support speech recognition. Please use Chrome or Edge.",
         variant: "destructive",
       });
       return;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.lang = "en-US";
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 3;
+    try {
+      // Setup audio visualization
+      await setupAudioVisualization();
 
-    setIsListening(true);
-    setRecordingStartTime(Date.now());
-    setRecordingDuration(0);
-    setTranscript("");
-    setLiveTranscript("");
-    setRecognitionInstance(recognition);
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
 
-    // Setup audio visualization
-    await setupAudioVisualization();
+      recognition.onstart = () => {
+        setIsListening(true);
+        setRecordingStartTime(Date.now());
+        toast({
+          title: "Recording Started",
+          description: "Speak clearly into your microphone",
+        });
+      };
 
-    recognition.start();
+      recognition.onresult = (event) => {
+        let interimTranscript = "";
+        let finalTranscript = "";
 
-    recognition.onresult = (event) => {
-      let finalTranscript = "";
-      let interimTranscript = "";
-      let totalConfidence = 0;
-      let resultCount = 0;
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        const result = event.results[i];
-        if (result.isFinal) {
-          finalTranscript += result[0].transcript + " ";
-          totalConfidence += result[0].confidence || 0.8;
-          resultCount++;
-        } else {
-          interimTranscript += result[0].transcript;
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcriptPart = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcriptPart;
+          } else {
+            interimTranscript += transcriptPart;
+          }
         }
-      }
 
-      if (resultCount > 0) {
-        setConfidence(totalConfidence / resultCount);
-      }
+        setLiveTranscript(interimTranscript);
+        if (finalTranscript) {
+          setTranscript((prev) => prev + finalTranscript + " ");
+          setConfidence(event.results[event.results.length - 1][0].confidence);
+        }
+      };
 
-      setTranscript((prev) => prev + finalTranscript);
-      setLiveTranscript(interimTranscript);
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        toast({
+          title: "Recognition Error",
+          description: "Speech recognition encountered an error",
+          variant: "destructive",
+        });
+        stopListening();
+      };
 
-      // Auto-save functionality
-      if (autoSave && finalTranscript.trim()) {
-        // Implement auto-save logic here
-      }
-    };
+      recognition.onend = () => {
+        if (isListening) {
+          // Restart recognition if it stops unexpectedly
+          recognition.start();
+        }
+      };
 
-    recognition.onerror = (event) => {
-      console.error("Speech Recognition Error:", event.error);
-      let errorMessage = "There was an error with voice recognition";
-
-      switch (event.error) {
-        case "no-speech":
-          errorMessage = "No speech detected. Please try speaking louder.";
-          break;
-        case "audio-capture":
-          errorMessage = "Microphone access denied or not available.";
-          break;
-        case "not-allowed":
-          errorMessage =
-            "Microphone permission denied. Please allow microphone access.";
-          break;
-        case "network":
-          errorMessage = "Network error occurred during recognition.";
-          break;
-        default:
-          errorMessage = `Speech recognition error: ${event.error}`;
-      }
-
+      recognition.start();
+      setRecognitionInstance(recognition);
+    } catch (error) {
+      console.error("Error starting recognition:", error);
       toast({
         title: "Recording Error",
-        description: errorMessage,
+        description: "Could not start recording",
         variant: "destructive",
       });
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-      if (
-        mediaRecorderRef.current &&
-        mediaRecorderRef.current.state === "recording"
-      ) {
-        mediaRecorderRef.current.stop();
-      }
-      if (transcript.trim()) {
-        toast({
-          title: "Recording Complete",
-          description: `Captured ${wordCount} words with ${Math.round(
-            confidence * 100
-          )}% confidence`,
-        });
-      }
-    };
+    }
   };
 
   const stopListening = () => {
     if (recognitionInstance) {
       recognitionInstance.stop();
-      setIsListening(false);
+      setRecognitionInstance(null);
     }
-    if (
-      mediaRecorderRef.current &&
-      mediaRecorderRef.current.state === "recording"
-    ) {
+
+    if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
     }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+    }
+
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
+
+    setIsListening(false);
+    setLiveTranscript("");
+    setAudioLevel(0);
+
+    toast({
+      title: "Recording Stopped",
+      description: `Recorded ${formatDuration(recordingDuration)}`,
+    });
   };
 
-  const processMemory = async () => {
+  const processWithAI = async () => {
     if (!transcript.trim()) {
       toast({
         title: "No Content",
-        description: "Please record some content before processing",
+        description: "Please record some content first",
         variant: "destructive",
       });
       return;
     }
 
     setIsProcessing(true);
+    setProcessingSteps([]);
+    setCurrentStep(0);
+
     try {
-      const aiResults = await processTranscriptWithAI(transcript, context);
+      // Step 1: AI Processing
+      updateProcessingStep("AI Analysis", "processing");
+      const aiResults = await processTranscriptWithOpenAI(transcript, context);
+      updateProcessingStep("AI Analysis", "completed");
 
-      // Enhanced AI results with additional metadata
-      const enhancedResults = {
+      // Step 2: Audio Analysis (Premium)
+      if (audioBlob && subscriptionStatus?.isActive) {
+        await analyzeAudio(audioBlob);
+      }
+
+      // Step 3: Blockchain Verification
+      const blockchainResult = await verifyOnBlockchain({
+        type: "memory_verification",
+        transcript,
+        summary: aiResults.summary,
+        title: aiResults.title,
+        user_id: user?.id,
+      });
+
+      setSummaryData({
         ...aiResults,
-        word_count: wordCount,
-        confidence: confidence,
-        audio_duration: recordingDuration,
-        recording_quality: recordingQuality,
-        noise_reduction: noiseReduction,
-        context: context,
-      };
-
-      setSummaryData(enhancedResults);
+        blockchainHash: blockchainResult?.hash,
+        verificationStatus: blockchainResult ? "verified" : "pending",
+      });
 
       toast({
-        title: "Memory Processed Successfully! 🧠",
-        description: `Analyzed ${wordCount} words and extracted ${
-          aiResults.actionItems?.length || 0
-        } action items`,
+        title: "Processing Complete",
+        description: "Your memory has been analyzed and verified",
       });
     } catch (error) {
       console.error("Processing error:", error);
       toast({
-        title: "Processing Error",
-        description: "Failed to process your memory. Please try again.",
+        title: "Processing Failed",
+        description: "Could not process the recording",
         variant: "destructive",
       });
     } finally {
@@ -416,11 +498,45 @@ const handleSaveMemory = async (audioFile, videoFile, memoryData) => {
     }
   };
 
-  const saveToMemories = async () => {
-    if (!summaryData || !transcript) {
+  const handleQuickSave = async () => {
+    if (!transcript.trim()) return;
+
+    try {
+      const quickMemory = {
+        user_id: user?.id,
+        title: `Quick Save - ${new Date().toLocaleDateString()}`,
+        transcript,
+        summary: "Quick saved memory",
+        word_count: wordCount,
+        confidence,
+        category: context,
+        priority: "medium",
+        created_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase.from("memories").insert([quickMemory]);
+
+      if (error) throw error;
+
       toast({
-        title: "No Data",
-        description: "No data to save. Please record and process first.",
+        title: "Quick Save Complete",
+        description: "Memory saved to your timeline",
+      });
+    } catch (error) {
+      console.error("Quick save error:", error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save memory",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const saveMemory = async () => {
+    if (!summaryData) {
+      toast({
+        title: "Process First",
+        description: "Please process the recording with AI first",
         variant: "destructive",
       });
       return;
@@ -428,96 +544,90 @@ const handleSaveMemory = async (audioFile, videoFile, memoryData) => {
 
     setIsSaving(true);
     try {
-      const { data: userData, error: authError } =
-        await supabase.auth.getUser();
-
-      if (authError || !userData?.user?.id) {
-        toast({
-          title: "Authentication Error",
-          description: "Please log in to save memories",
-          variant: "destructive",
-        });
-        navigate("/login");
-        return;
-      }
-
       const memoryData = {
-        user_id: userData.user.id,
-        transcript: transcript.trim(),
+        user_id: user?.id,
         title: summaryData.title,
+        transcript,
         summary: summaryData.summary,
-        action_items: summaryData.actionItems || [],
-        tags: summaryData.tags || [],
-        priority: summaryData.priority || "medium",
-        category: summaryData.category || "general",
-        sentiment: summaryData.sentiment || "neutral",
+        action_items: summaryData.actionItems,
+        tags: summaryData.tags,
+        priority: summaryData.priority,
+        category: summaryData.category,
+        sentiment: summaryData.sentiment,
         due_date: summaryData.dueDate,
-        audio_duration: recordingDuration,
         word_count: wordCount,
-        confidence: confidence,
+        confidence: summaryData.confidence,
+        audio_duration: recordingDuration,
         recording_quality: recordingQuality,
         created_at: new Date().toISOString(),
       };
 
       const result = await storeVerifiedMemory(memoryData);
 
-      setVerificationStatus({
-        verified: result.verified,
-        hash: result.hash,
-        blockId: result.block.id,
-      });
+      if (result.memory) {
+        toast({
+          title: "Memory Saved Successfully",
+          description: "Your memory has been saved with blockchain verification",
+        });
 
-      toast({
-        title: "Memory Saved Successfully! 🎉",
-        description:
-          "Your memory has been saved and verified on the blockchain",
-      });
+        // Synthesize confirmation message
+        if (subscriptionStatus?.isActive) {
+          await synthesizeVoice("Your memory has been saved successfully!");
+        }
 
-      setTimeout(() => {
-        navigate("/timeline");
-      }, 2000);
+        // Reset form
+        setTranscript("");
+        setSummaryData(null);
+        setRecordingDuration(0);
+        setWordCount(0);
+        setConfidence(0);
+        setAudioBlob(null);
+        setProcessingSteps([]);
+      }
     } catch (error) {
       console.error("Save error:", error);
       toast({
-        title: "Save Error",
-        description: "Failed to save memory. Please try again.",
+        title: "Save Failed",
+        description: "Could not save memory",
         variant: "destructive",
       });
     } finally {
       setIsSaving(false);
     }
   };
-  
 
-  const handleQuickExport = async (type) => {
+  const exportActions = async (type) => {
     if (!summaryData?.actionItems?.length) {
       toast({
         title: "No Action Items",
-        description: "Process your memory first to extract action items",
+        description: "Process the recording first to extract action items",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      if (type === "calendar") {
-        await exportToGoogleCalendar(
-          summaryData.actionItems,
-          summaryData.title
-        );
+      let result;
+      switch (type) {
+        case "calendar":
+          result = await exportToGoogleCalendar(
+            summaryData.actionItems,
+            summaryData.title
+          );
+          break;
+        case "todoist":
+          result = await exportToTodoist(
+            summaryData.actionItems,
+            summaryData.title,
+            summaryData.priority
+          );
+          break;
+      }
+
+      if (result?.success) {
         toast({
-          title: "Exported to Calendar",
-          description: "Action items added to your calendar",
-        });
-      } else if (type === "todoist") {
-        await exportToTodoist(
-          summaryData.actionItems,
-          summaryData.title,
-          summaryData.priority
-        );
-        toast({
-          title: "Exported to Todoist",
-          description: "Tasks added to Todoist",
+          title: "Export Successful",
+          description: `Action items exported to ${type}`,
         });
       }
     } catch (error) {
@@ -529,510 +639,478 @@ const handleSaveMemory = async (audioFile, videoFile, memoryData) => {
     }
   };
 
-  const downloadAudio = () => {
-    if (audioBlob) {
-      const url = URL.createObjectURL(audioBlob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `recording-${Date.now()}.wav`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-  };
-
-  const contextOptions = [
-    { value: "general", label: "📝 General Note", icon: "📝" },
-    { value: "meeting", label: "💼 Meeting/Work", icon: "💼" },
-    { value: "personal", label: "👤 Personal Task", icon: "👤" },
-    { value: "shopping", label: "🛒 Shopping List", icon: "🛒" },
-    { value: "health", label: "🏥 Health/Medical", icon: "🏥" },
-    { value: "learning", label: "📚 Learning/Study", icon: "📚" },
-    { value: "brainstorm", label: "💡 Brainstorming", icon: "💡" },
-    { value: "interview", label: "🎤 Interview", icon: "🎤" },
-  ];
+  const ProcessingSteps = () => (
+    <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+        <Activity className="h-5 w-5 text-blue-600" />
+        Processing Steps
+      </h3>
+      <div className="space-y-3">
+        {processingSteps.map((step, index) => (
+          <div key={index} className="flex items-center gap-3">
+            {step.status === "completed" && (
+              <CheckCircle className="h-5 w-5 text-green-600" />
+            )}
+            {step.status === "processing" && (
+              <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            )}
+            {step.status === "failed" && (
+              <AlertCircle className="h-5 w-5 text-red-600" />
+            )}
+            <span
+              className={`text-sm ${
+                step.status === "completed"
+                  ? "text-green-700 dark:text-green-300"
+                  : step.status === "failed"
+                  ? "text-red-700 dark:text-red-300"
+                  : "text-blue-700 dark:text-blue-300"
+              }`}
+            >
+              {step.name}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="py-6 px-4 max-w-5xl mx-auto">
-      {onBack && (
-        <button
-          onClick={onBack}
-          className="mb-6 flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200 px-4 py-2 rounded-lg hover:bg-purple-50"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Home
-        </button>
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={onBack || (() => navigate("/"))}
+            className="flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200 px-4 py-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
 
-      <div className="space-y-6">
-        {/* Recording Settings */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border-2 border-purple-200">
-          <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-            <Settings className="h-5 w-5 text-purple-600" />
-            Recording Settings
-          </h3>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="p-2 text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <Settings className="h-5 w-5" />
+            </button>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Quality
-              </label>
-              <select
-                value={recordingQuality}
-                onChange={(e) => setRecordingQuality(e.target.value)}
-                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="high">High Quality (48kHz)</option>
-                <option value="standard">Standard (16kHz)</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={noiseReduction}
-                  onChange={(e) => setNoiseReduction(e.target.checked)}
-                  className="rounded"
-                />
-                <span className="text-sm">Noise Reduction</span>
-              </label>
-
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={autoSave}
-                  onChange={(e) => setAutoSave(e.target.checked)}
-                  className="rounded"
-                />
-                <span className="text-sm">Auto Save</span>
-              </label>
-            </div>
-
-            <div className="flex items-center gap-2">
+            {subscriptionStatus?.tier === "free" && (
               <button
-                onClick={() => setIsAudioMuted(!isAudioMuted)}
-                className={`p-2 rounded-lg ${
-                  isAudioMuted
-                    ? "bg-red-100 text-red-600"
-                    : "bg-green-100 text-green-600"
-                }`}
+                onClick={() => navigate("/premium")}
+                className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-2 rounded-lg hover:from-amber-600 hover:to-orange-700 transition-all duration-200"
               >
-                {isAudioMuted ? (
-                  <VolumeX className="h-4 w-4" />
-                ) : (
-                  <Volume2 className="h-4 w-4" />
-                )}
+                <Crown className="h-4 w-4" />
+                Upgrade
               </button>
-              <span className="text-sm text-slate-600">
-                {isAudioMuted ? "Muted" : "Audio On"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Context Selection */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border-2 border-purple-200">
-          <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-            <Brain className="h-5 w-5 text-purple-600" />
-            What type of note are you recording?
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {contextOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setContext(option.value)}
-                className={`p-3 rounded-lg border-2 transition-all duration-200 text-left ${
-                  context === option.value
-                    ? "border-purple-500 bg-purple-50 text-purple-700"
-                    : "border-slate-200 hover:border-purple-300 text-slate-600"
-                }`}
-              >
-                <div className="text-lg mb-1">{option.icon}</div>
-                <div className="text-sm font-medium">
-                  {option.label.split(" ").slice(1).join(" ")}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Recording Controls */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border-2 border-purple-200">
-          <div className="text-center space-y-6">
-            <h2 className="text-2xl font-bold text-slate-800 mb-4">
-              🎙️ Advanced Voice Recording
-            </h2>
-
-            {/* Audio Visualization */}
-            {isListening && (
-              <div className="mb-6">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Activity className="h-5 w-5 text-purple-600" />
-                  <span className="text-sm text-slate-600">Audio Level</span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-3">
-                  <div
-                    className="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-100"
-                    style={{ width: `${audioLevel * 100}%` }}
-                  />
-                </div>
-              </div>
             )}
+          </div>
+        </div>
 
-            {!isListening ? (
-              <div className="space-y-4">
-                <button
-                  onClick={startListening}
-                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 px-8 py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-3 mx-auto"
+        {/* Title */}
+        <div className="text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            Smart Voice Recording
+          </h1>
+          <p className="text-lg text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
+            Record your thoughts and let AI transform them into actionable
+            insights with blockchain verification
+          </p>
+        </div>
+
+        {/* Settings Panel */}
+        {showSettings && (
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Recording Settings
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Context
+                </label>
+                <select
+                  value={context}
+                  onChange={(e) => setContext(e.target.value)}
+                  className="w-full p-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500"
                 >
-                  <Play className="h-6 w-6" />
-                  Start High-Quality Recording
-                </button>
-                <p className="text-slate-600 text-sm">
-                  Advanced speech recognition with live captions and audio
-                  visualization
-                </p>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </option>
+                  ))}
+                </select>
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-center gap-4">
-                  <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
-                  <div className="text-3xl font-mono text-red-600 font-bold">
-                    {formatDuration(recordingDuration)}
-                  </div>
-                  <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
-                </div>
 
-                {/* Live Captions */}
-                {liveTranscript && (
-                  <div className="bg-slate-100 p-4 rounded-lg border-l-4 border-blue-500">
-                    <p className="text-slate-700 italic">{liveTranscript}</p>
-                  </div>
-                )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Quality
+                </label>
+                <select
+                  value={recordingQuality}
+                  onChange={(e) => setRecordingQuality(e.target.value)}
+                  className="w-full p-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="standard">Standard (16kHz)</option>
+                  <option value="high">High (48kHz)</option>
+                </select>
+              </div>
 
-                <div className="flex justify-center gap-3">
-                  <button
-                    onClick={stopListening}
-                    className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 px-8 py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-3"
+              <div className="space-y-3">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={noiseReduction}
+                    onChange={(e) => setNoiseReduction(e.target.checked)}
+                    className="rounded"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Noise Reduction
+                  </span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={autoSave}
+                    onChange={(e) => setAutoSave(e.target.checked)}
+                    className="rounded"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Auto Save
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Recording Panel */}
+          <div className="space-y-6">
+            {/* Main Recording Control */}
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 border border-gray-200 dark:border-gray-700 text-center">
+              <div className="space-y-6">
+                {/* Audio Visualization */}
+                <div className="relative">
+                  <div
+                    className={`w-32 h-32 mx-auto rounded-full border-4 transition-all duration-300 flex items-center justify-center ${
+                      isListening
+                        ? "border-red-500 bg-red-50 dark:bg-red-900/20 animate-pulse"
+                        : "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                    }`}
+                    style={{
+                      transform: `scale(${1 + audioLevel * 0.3})`,
+                    }}
                   >
-                    <Square className="h-6 w-6" />
-                    Stop Recording
-                  </button>
+                    <Mic
+                      className={`h-12 w-12 ${
+                        isListening
+                          ? "text-red-600"
+                          : "text-purple-600 dark:text-purple-400"
+                      }`}
+                    />
+                  </div>
 
-                  {audioBlob && (
-                    <button
-                      onClick={downloadAudio}
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 px-6 py-4 text-white font-semibold rounded-xl transition-all duration-300 flex items-center gap-2"
-                    >
-                      <Download className="h-5 w-5" />
-                      Download Audio
-                    </button>
+                  {/* Audio Level Indicator */}
+                  {isListening && (
+                    <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+                      <div className="flex gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <div
+                            key={i}
+                            className={`w-2 h-6 rounded-full transition-all duration-150 ${
+                              audioLevel * 5 > i
+                                ? "bg-red-500"
+                                : "bg-gray-300 dark:bg-gray-600"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
 
-                <div className="flex items-center justify-center gap-4 text-sm text-slate-600">
-                  <span>Words: {wordCount}</span>
-                  <span>•</span>
-                  <span>Confidence: {Math.round(confidence * 100)}%</span>
-                  <span>•</span>
-                  <span>Quality: {recordingQuality}</span>
+                {/* Recording Button */}
+                <button
+                  onClick={isListening ? stopListening : startListening}
+                  disabled={isProcessing || isSaving}
+                  className={`w-full py-4 px-8 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-3 ${
+                    isListening
+                      ? "bg-red-500 hover:bg-red-600 text-white"
+                      : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {isListening ? (
+                    <>
+                      <Square className="h-5 w-5" />
+                      Stop Recording
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="h-5 w-5" />
+                      Start Recording
+                    </>
+                  )}
+                </button>
+
+                {/* Recording Stats */}
+                {(isListening || transcript) && (
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {formatDuration(recordingDuration)}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Duration
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {wordCount}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Words
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {Math.round(confidence * 100)}%
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Confidence
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Live Transcript */}
+            {(transcript || liveTranscript) && (
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <FileAudio className="h-5 w-5 text-purple-600" />
+                  Live Transcript
+                </h3>
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg max-h-60 overflow-y-auto">
+                  <p className="text-gray-900 dark:text-white leading-relaxed">
+                    {transcript}
+                    {liveTranscript && (
+                      <span className="text-gray-500 dark:text-gray-400 italic">
+                        {liveTranscript}
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={handleQuickSave}
+                    disabled={!transcript.trim() || isSaving}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
+                  >
+                    <Save className="h-4 w-4" />
+                    Quick Save
+                  </button>
+                  <button
+                    onClick={() => setTranscript("")}
+                    disabled={isListening}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
+                  >
+                    <X className="h-4 w-4" />
+                    Clear
+                  </button>
                 </div>
               </div>
             )}
           </div>
-        </div>
 
-        {/* Transcript Display */}
-        {transcript && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border-2 border-purple-200">
-            <h3 className="text-xl font-semibold text-slate-800 mb-4 flex items-center gap-2">
-              <FileAudio className="h-5 w-5 text-purple-600" />
-              Your Voice Input
-            </h3>
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6 max-h-60 overflow-y-auto">
-              <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">
-                {transcript}
-              </p>
-            </div>
+          {/* Analysis Panel */}
+          <div className="space-y-6">
+            {/* AI Processing */}
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Brain className="h-5 w-5 text-purple-600" />
+                AI Analysis
+              </h3>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm text-slate-600 mb-6">
-              <div className="bg-purple-50 p-3 rounded-lg text-center">
-                <div className="font-semibold text-purple-600">
-                  {formatDuration(recordingDuration)}
-                </div>
-                <div>Duration</div>
-              </div>
-              <div className="bg-blue-50 p-3 rounded-lg text-center">
-                <div className="font-semibold text-blue-600">{wordCount}</div>
-                <div>Words</div>
-              </div>
-              <div className="bg-green-50 p-3 rounded-lg text-center">
-                <div className="font-semibold text-green-600">
-                  {Math.round(confidence * 100)}%
-                </div>
-                <div>Confidence</div>
-              </div>
-              <div className="bg-orange-50 p-3 rounded-lg text-center">
-                <div className="font-semibold text-orange-600 capitalize">
-                  {context}
-                </div>
-                <div>Context</div>
-              </div>
-              <div className="bg-indigo-50 p-3 rounded-lg text-center">
-                <div className="font-semibold text-indigo-600 capitalize">
-                  {recordingQuality}
-                </div>
-                <div>Quality</div>
-              </div>
-            </div>
-
-            <div className="text-center">
               <button
-                onClick={processMemory}
-                disabled={isProcessing}
-                className={`bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 px-8 py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2 mx-auto ${
-                  isProcessing ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                onClick={processWithAI}
+                disabled={!transcript.trim() || isProcessing || isListening}
+                className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isProcessing ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Processing with Advanced AI...
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Processing...
                   </>
                 ) : (
                   <>
                     <Zap className="h-5 w-5" />
-                    🧠 Extract Actionable Insights
+                    Process with AI
                   </>
                 )}
               </button>
+
+              {/* Premium Features */}
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Video className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm text-blue-800 dark:text-blue-200">
+                      Tavus Video Analysis
+                    </span>
+                  </div>
+                  {subscriptionStatus?.isActive ? (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Crown className="h-4 w-4 text-amber-500" />
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Headphones className="h-4 w-4 text-green-600" />
+                    <span className="text-sm text-green-800 dark:text-green-200">
+                      ElevenLabs Voice AI
+                    </span>
+                  </div>
+                  {subscriptionStatus?.isActive ? (
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Crown className="h-4 w-4 text-amber-500" />
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Hash className="h-4 w-4 text-purple-600" />
+                    <span className="text-sm text-purple-800 dark:text-purple-200">
+                      Algorand Blockchain
+                    </span>
+                  </div>
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                </div>
+              </div>
             </div>
-          </div>
-        )}
 
-        {/* Enhanced AI Analysis Results */}
-        {summaryData && (
-          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 shadow-lg border-2 border-purple-200">
-            <h3 className="text-xl font-semibold text-purple-800 mb-6 flex items-center gap-2">
-              ✨ Advanced AI Analysis Complete
-            </h3>
+            {/* Processing Steps */}
+            {isProcessing && processingSteps.length > 0 && <ProcessingSteps />}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    Title & Summary
-                  </h4>
-                  <div className="bg-white/50 p-4 rounded-lg space-y-2">
-                    <p className="font-medium text-slate-800">
+            {/* Summary Results */}
+            {summaryData && (
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-green-600" />
+                  Analysis Results
+                </h3>
+
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">
                       {summaryData.title}
-                    </p>
-                    <p className="text-slate-600 text-sm">
+                    </h4>
+                    <p className="text-gray-700 dark:text-gray-300 text-sm">
                       {summaryData.summary}
                     </p>
                   </div>
-                </div>
 
-                <div>
-                  <h4 className="font-semibold text-slate-700 mb-2">
-                    Analysis Metrics
-                  </h4>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-white/50 p-3 rounded-lg text-center">
-                      <div className="font-bold text-purple-600">
-                        {Math.round(summaryData.confidence * 100)}%
-                      </div>
-                      <div className="text-xs text-slate-600">
-                        AI Confidence
+                  {summaryData.actionItems?.length > 0 && (
+                    <div>
+                      <h5 className="font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                        <Target className="h-4 w-4" />
+                        Action Items ({summaryData.actionItems.length})
+                      </h5>
+                      <div className="space-y-2">
+                        {summaryData.actionItems.slice(0, 3).map((item, index) => (
+                          <div key={index} className="flex items-start gap-2">
+                            <CheckSquare className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              {item}
+                            </span>
+                          </div>
+                        ))}
+                        {summaryData.actionItems.length > 3 && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            +{summaryData.actionItems.length - 3} more items
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <div className="bg-white/50 p-3 rounded-lg text-center">
-                      <div className="font-bold text-blue-600">
-                        {summaryData.word_count}
-                      </div>
-                      <div className="text-xs text-slate-600">
-                        Words Analyzed
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  )}
 
-                <div>
-                  <h4 className="font-semibold text-slate-700 mb-2">
-                    Classification
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        summaryData.priority === "urgent"
-                          ? "bg-red-100 text-red-700"
-                          : summaryData.priority === "high"
-                          ? "bg-orange-100 text-orange-700"
-                          : summaryData.priority === "medium"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-green-100 text-green-700"
-                      }`}
-                    >
-                      {summaryData.priority} priority
-                    </span>
-                    <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium capitalize">
-                      {summaryData.category}
-                    </span>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        summaryData.sentiment === "positive"
-                          ? "bg-green-100 text-green-700"
-                          : summaryData.sentiment === "negative"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-blue-100 text-blue-700"
-                      }`}
-                    >
-                      {summaryData.sentiment}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                    <CheckSquare className="h-4 w-4" />
-                    Action Items ({summaryData.actionItems?.length || 0})
-                  </h4>
-                  <div className="bg-white/50 p-3 rounded-lg space-y-2 max-h-40 overflow-y-auto">
-                    {summaryData.actionItems &&
-                    summaryData.actionItems.length > 0 ? (
-                      summaryData.actionItems.map((item, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <span className="text-purple-600 font-bold mt-1">
-                            •
+                  {summaryData.tags?.length > 0 && (
+                    <div>
+                      <h5 className="font-medium text-gray-900 dark:text-white mb-2">
+                        Tags
+                      </h5>
+                      <div className="flex flex-wrap gap-2">
+                        {summaryData.tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs rounded-full"
+                          >
+                            #{tag}
                           </span>
-                          <span className="text-slate-600 text-sm">{item}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-slate-500 italic text-sm">
-                        No specific action items identified
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-slate-700 mb-2">
-                    Smart Tags
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {summaryData.tags && summaryData.tags.length > 0 ? (
-                      summaryData.tags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className="px-2 py-1 bg-indigo-100 text-indigo-700 text-sm rounded-full"
-                        >
-                          #{tag}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-slate-500 italic text-sm">
-                        No tags generated
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {summaryData.dueDate && (
-                  <div>
-                    <h4 className="font-semibold text-slate-700 mb-2">
-                      Suggested Due Date
-                    </h4>
-                    <div className="bg-white/50 p-3 rounded-lg">
-                      <span className="text-slate-600 text-sm">
-                        {new Date(summaryData.dueDate).toLocaleDateString()}
-                      </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </div>
+                  )}
 
-            {/* Quick Export Actions */}
-            {summaryData.actionItems && summaryData.actionItems.length > 0 && (
-              <div className="mt-6 p-4 bg-white/50 rounded-lg">
-                <h4 className="font-semibold text-slate-700 mb-3">
-                  Quick Export:
-                </h4>
-                <div className="flex gap-2 flex-wrap">
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                      <span>Priority: {summaryData.priority}</span>
+                      <span>Category: {summaryData.category}</span>
+                      <span>Sentiment: {summaryData.sentiment}</span>
+                    </div>
+                    {summaryData.blockchainHash && (
+                      <div className="flex items-center gap-1 text-green-600">
+                        <Shield className="h-4 w-4" />
+                        <span className="text-xs">Verified</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Export Actions */}
+                <div className="flex gap-2 mt-6">
                   <button
-                    onClick={() => handleQuickExport("calendar")}
+                    onClick={() => exportActions("calendar")}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                   >
                     <Calendar className="h-4 w-4" />
-                    Add to Calendar
+                    Calendar
                   </button>
                   <button
-                    onClick={() => handleQuickExport("todoist")}
+                    onClick={() => exportActions("todoist")}
                     className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                   >
-                    <Target className="h-4 w-4" />
-                    Send to Todoist
+                    <CheckSquare className="h-4 w-4" />
+                    Todoist
+                  </button>
+                  <button
+                    onClick={saveMemory}
+                    disabled={isSaving}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 ml-auto"
+                  >
+                    {isSaving ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />
+                        Save Memory
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
             )}
-
-            <div className="text-center mt-8">
-              <button
-                onClick={saveToMemories}
-                disabled={isSaving}
-                className={`bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 px-8 py-4 text-white text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2 mx-auto ${
-                  isSaving ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                {isSaving ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Saving & Verifying...
-                  </>
-                ) : (
-                  <>
-                    <Shield className="h-5 w-5" />
-                    💾 Save to Timeline
-                  </>
-                )}
-              </button>
-            </div>
           </div>
-        )}
-
-        {/* Blockchain Verification Status */}
-        {verificationStatus && (
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 shadow-lg border-2 border-green-200">
-            <div className="flex items-center gap-3 mb-4">
-              <Shield className="h-6 w-6 text-green-600" />
-              <h3 className="text-lg font-semibold text-green-800">
-                Blockchain Verification Complete ✅
-              </h3>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Hash className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-700">
-                  Hash: {verificationStatus.hash.substring(0, 16)}...
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-700">
-                  Block ID: {verificationStatus.blockId}
-                </span>
-              </div>
-              <p className="text-sm text-green-600 font-medium">
-                ✅ Your memory has been cryptographically secured and verified
-              </p>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

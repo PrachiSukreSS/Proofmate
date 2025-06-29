@@ -13,7 +13,7 @@ import { getSubscriptionStatus, purchaseSubscription, getAvailableProducts } fro
  */
 export const processVideoWithTavus = async (videoFile) => {
   try {
-    console.log('Processing video with Tavus AI...');
+    console.log('🎬 Processing video with Tavus AI...');
     const result = await analyzeWithTavus(videoFile);
     
     if (result.success) {
@@ -29,14 +29,14 @@ export const processVideoWithTavus = async (videoFile) => {
     
     throw new Error(result.error || 'Tavus analysis failed');
   } catch (error) {
-    console.error('Tavus integration error:', error);
+    console.error('❌ Tavus integration error:', error);
     return { success: false, error: error.message };
   }
 };
 
 export const createPersonalizedVideoWithTavus = async (script, voiceId, avatarId) => {
   try {
-    console.log('Creating personalized video with Tavus...');
+    console.log('🎬 Creating personalized video with Tavus...');
     const result = await generatePersonalizedVideo(script, voiceId, avatarId);
     
     if (result.success) {
@@ -52,7 +52,7 @@ export const createPersonalizedVideoWithTavus = async (script, voiceId, avatarId
     
     throw new Error(result.error || 'Video generation failed');
   } catch (error) {
-    console.error('Tavus video generation error:', error);
+    console.error('❌ Tavus video generation error:', error);
     return { success: false, error: error.message };
   }
 };
@@ -62,7 +62,7 @@ export const createPersonalizedVideoWithTavus = async (script, voiceId, avatarId
  */
 export const processAudioWithElevenLabs = async (audioFile) => {
   try {
-    console.log('Processing audio with ElevenLabs...');
+    console.log('🎧 Processing audio with ElevenLabs...');
     const result = await processWithElevenLabs(audioFile);
     
     if (result.success) {
@@ -79,14 +79,14 @@ export const processAudioWithElevenLabs = async (audioFile) => {
     
     throw new Error(result.error || 'ElevenLabs analysis failed');
   } catch (error) {
-    console.error('ElevenLabs integration error:', error);
+    console.error('❌ ElevenLabs integration error:', error);
     return { success: false, error: error.message };
   }
 };
 
 export const generateVoiceWithElevenLabs = async (text, voiceId, settings = {}) => {
   try {
-    console.log('Generating voice with ElevenLabs...');
+    console.log('🗣️ Generating voice with ElevenLabs...');
     const result = await synthesizeVoice(text, voiceId, settings);
     
     if (result.success) {
@@ -101,14 +101,14 @@ export const generateVoiceWithElevenLabs = async (text, voiceId, settings = {}) 
     
     throw new Error(result.error || 'Voice synthesis failed');
   } catch (error) {
-    console.error('ElevenLabs voice generation error:', error);
+    console.error('❌ ElevenLabs voice generation error:', error);
     return { success: false, error: error.message };
   }
 };
 
 export const createVoiceCloneWithElevenLabs = async (audioSamples, voiceName) => {
   try {
-    console.log('Creating voice clone with ElevenLabs...');
+    console.log('🎭 Creating voice clone with ElevenLabs...');
     const result = await cloneVoice(audioSamples, voiceName);
     
     if (result.success) {
@@ -123,7 +123,7 @@ export const createVoiceCloneWithElevenLabs = async (audioSamples, voiceName) =>
     
     throw new Error(result.error || 'Voice cloning failed');
   } catch (error) {
-    console.error('ElevenLabs voice cloning error:', error);
+    console.error('❌ ElevenLabs voice cloning error:', error);
     return { success: false, error: error.message };
   }
 };
@@ -133,7 +133,7 @@ export const createVoiceCloneWithElevenLabs = async (audioSamples, voiceName) =>
  */
 export const verifyContentWithAlgorand = async (contentData) => {
   try {
-    console.log('Verifying content with Algorand blockchain...');
+    console.log('🔗 Verifying content with Algorand blockchain...');
     const result = await verifyWithAlgorand(contentData);
     
     if (result.success) {
@@ -150,14 +150,14 @@ export const verifyContentWithAlgorand = async (contentData) => {
     
     throw new Error(result.error || 'Algorand verification failed');
   } catch (error) {
-    console.error('Algorand integration error:', error);
+    console.error('❌ Algorand integration error:', error);
     return { success: false, error: error.message };
   }
 };
 
 export const deploySmartContractToAlgorand = async (contractData) => {
   try {
-    console.log('Deploying smart contract to Algorand...');
+    console.log('🔗 Deploying smart contract to Algorand...');
     const result = await createSmartContract(contractData);
     
     if (result.success) {
@@ -172,7 +172,7 @@ export const deploySmartContractToAlgorand = async (contractData) => {
     
     throw new Error(result.error || 'Smart contract deployment failed');
   } catch (error) {
-    console.error('Algorand smart contract error:', error);
+    console.error('❌ Algorand smart contract error:', error);
     return { success: false, error: error.message };
   }
 };
@@ -192,7 +192,7 @@ export const getAlgorandNetworkStats = async () => {
       networkUptime: stats.networkUptime
     };
   } catch (error) {
-    console.error('Algorand stats error:', error);
+    console.error('❌ Algorand stats error:', error);
     return { success: false, error: error.message };
   }
 };
@@ -200,10 +200,10 @@ export const getAlgorandNetworkStats = async () => {
 /**
  * RevenueCat Subscription Integration
  */
-export const getUserSubscriptionStatus = async () => {
+export const getUserSubscriptionStatus = async (userId) => {
   try {
-    console.log('Getting user subscription status...');
-    const status = await getSubscriptionStatus();
+    console.log('💰 Getting user subscription status...');
+    const status = await getSubscriptionStatus(userId);
     
     return {
       success: true,
@@ -214,7 +214,7 @@ export const getUserSubscriptionStatus = async () => {
       limits: status.limits
     };
   } catch (error) {
-    console.error('RevenueCat subscription error:', error);
+    console.error('❌ RevenueCat subscription error:', error);
     return { 
       success: false, 
       error: error.message,
@@ -228,7 +228,7 @@ export const getUserSubscriptionStatus = async () => {
 
 export const purchaseSubscriptionPlan = async (productId) => {
   try {
-    console.log(`Purchasing subscription plan: ${productId}`);
+    console.log(`💳 Purchasing subscription plan: ${productId}`);
     const result = await purchaseSubscription(productId);
     
     if (result.success) {
@@ -242,14 +242,14 @@ export const purchaseSubscriptionPlan = async (productId) => {
     
     throw new Error(result.error || 'Purchase failed');
   } catch (error) {
-    console.error('RevenueCat purchase error:', error);
+    console.error('❌ RevenueCat purchase error:', error);
     return { success: false, error: error.message };
   }
 };
 
 export const getSubscriptionProducts = async () => {
   try {
-    console.log('Getting available subscription products...');
+    console.log('💰 Getting available subscription products...');
     const products = await getAvailableProducts();
     
     return {
@@ -264,7 +264,7 @@ export const getSubscriptionProducts = async () => {
       }))
     };
   } catch (error) {
-    console.error('RevenueCat products error:', error);
+    console.error('❌ RevenueCat products error:', error);
     return { success: false, error: error.message, products: [] };
   }
 };
@@ -287,7 +287,7 @@ export const exportToGoogleCalendar = async (actionItems, title) => {
     window.open(calendarUrl, "_blank");
     return { success: true, url: calendarUrl };
   } catch (error) {
-    console.error("Google Calendar export error:", error);
+    console.error("❌ Google Calendar export error:", error);
     return { success: false, error: error.message };
   }
 };
@@ -300,7 +300,7 @@ export const exportToTodoist = async (actionItems, title, priority = "medium") =
     window.open(todoistUrl, "_blank");
     return { success: true, url: todoistUrl };
   } catch (error) {
-    console.error("Todoist export error:", error);
+    console.error("❌ Todoist export error:", error);
     return { success: false, error: error.message };
   }
 };
@@ -337,7 +337,7 @@ ${memory.transcript}
 
     return { success: true };
   } catch (error) {
-    console.error("PDF export error:", error);
+    console.error("❌ PDF export error:", error);
     return { success: false, error: error.message };
   }
 };
@@ -347,7 +347,7 @@ export const copyToClipboard = async (text) => {
     await navigator.clipboard.writeText(text);
     return { success: true };
   } catch (error) {
-    console.error("Clipboard error:", error);
+    console.error("❌ Clipboard error:", error);
     return { success: false, error: error.message };
   }
 };
