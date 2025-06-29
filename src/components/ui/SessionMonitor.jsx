@@ -8,12 +8,16 @@ const SessionMonitor = ({ sessionInfo }) => {
   const [timeRemaining, setTimeRemaining] = useState(0);
 
   useEffect(() => {
-    if (sessionInfo) {
-      setTimeRemaining(sessionInfo.timeRemaining);
-      
-      // Show monitor if session is expiring soon (less than 5 minutes)
-      const shouldShow = sessionInfo.timeRemaining < 5 * 60 * 1000 && sessionInfo.timeRemaining > 0;
-      setShowMonitor(shouldShow);
+    try {
+      if (sessionInfo) {
+        setTimeRemaining(sessionInfo.timeRemaining);
+        
+        // Show monitor if session is expiring soon (less than 5 minutes)
+        const shouldShow = sessionInfo.timeRemaining < 5 * 60 * 1000 && sessionInfo.timeRemaining > 0;
+        setShowMonitor(shouldShow);
+      }
+    } catch (error) {
+      console.warn("Session monitor update warning:", error);
     }
   }, [sessionInfo]);
 
@@ -29,9 +33,14 @@ const SessionMonitor = ({ sessionInfo }) => {
   }, [timeRemaining]);
 
   const formatTime = (ms) => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = Math.floor((ms % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    try {
+      const minutes = Math.floor(ms / 60000);
+      const seconds = Math.floor((ms % 60000) / 1000);
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    } catch (error) {
+      console.warn("Time formatting warning:", error);
+      return "0:00";
+    }
   };
 
   const getSecurityLevelColor = (level) => {

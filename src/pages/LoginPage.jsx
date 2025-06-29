@@ -20,6 +20,7 @@ import {
 import { useToast } from "../hooks/use-toast";
 import { authenticateUser, registerUser } from "../utils/secureAuthSystem";
 import { isAdmin } from "../utils/adminConfig";
+import { supabase } from "../utils/supabaseClient";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -41,15 +42,10 @@ const LoginPage = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          // Redirect based on user type
-          if (isAdmin(user.email)) {
-            navigate("/");
-          } else {
-            navigate("/");
-          }
+          navigate("/", { replace: true });
         }
       } catch (error) {
-        console.error("Auth check error:", error);
+        console.warn("Auth check warning:", error);
       }
     };
     checkExistingAuth();
@@ -65,10 +61,30 @@ const LoginPage = () => {
       return false;
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive"
+      });
+      return false;
+    }
+
     if (!password.trim()) {
       toast({
         title: "Password Required",
         description: "Please enter your password",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters long",
         variant: "destructive"
       });
       return false;
@@ -99,11 +115,9 @@ const LoginPage = () => {
 
   const simulateSecurityChecks = async () => {
     const checks = [
-      { name: "Email validation", duration: 300 },
-      { name: "Rate limiting check", duration: 200 },
-      { name: "Security scan", duration: 400 },
-      { name: "Blockchain initialization", duration: 600 },
-      { name: "Session setup", duration: 300 }
+      { name: "Email validation", duration: 200 },
+      { name: "Security scan", duration: 300 },
+      { name: "Session setup", duration: 200 }
     ];
 
     setSecurityChecks([]);
@@ -166,7 +180,7 @@ const LoginPage = () => {
           navigate("/", { replace: true });
         }, 1000);
       } else {
-        throw new Error(result.error);
+        throw new Error(result.error || "Authentication failed");
       }
     } catch (error) {
       console.error("Auth error:", error);
@@ -175,8 +189,8 @@ const LoginPage = () => {
       );
       
       toast({
-        title: "Authentication Error",
-        description: error.message || "An error occurred during authentication",
+        title: isLogin ? "Login Failed" : "Registration Failed",
+        description: error.message || "Please check your credentials and try again",
         variant: "destructive"
       });
     } finally {
@@ -189,7 +203,7 @@ const LoginPage = () => {
     {
       icon: Brain,
       title: "AI-Powered Analysis",
-      description: "Advanced GPT-4 integration for intelligent content processing"
+      description: "Advanced AI integration for intelligent content processing"
     },
     {
       icon: Shield,
@@ -199,7 +213,7 @@ const LoginPage = () => {
     {
       icon: Zap,
       title: "Real-time Processing",
-      description: "Instant verification with O(1) space complexity"
+      description: "Instant verification with optimized performance"
     },
     {
       icon: Globe,
@@ -280,7 +294,7 @@ const LoginPage = () => {
               <div className="text-xs text-gray-600 dark:text-gray-300">Integrity</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">&lt;1s</div>
+              <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400"><1s</div>
               <div className="text-xs text-gray-600 dark:text-gray-300">Auth Time</div>
             </div>
             <div className="text-center">
@@ -410,7 +424,7 @@ const LoginPage = () => {
                     className="w-full pl-10 pr-12 py-3 bg-white/90 dark:bg-gray-700/90 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                     placeholder="Enter your password"
                     required
-                    minLength={isLogin ? 1 : 8}
+                    minLength={6}
                   />
                   <button
                     type="button"
@@ -441,7 +455,7 @@ const LoginPage = () => {
                       className="w-full pl-10 pr-12 py-3 bg-white/90 dark:bg-gray-700/90 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                       placeholder="Confirm your password"
                       required={!isLogin}
-                      minLength={8}
+                      minLength={6}
                     />
                     <button
                       type="button"

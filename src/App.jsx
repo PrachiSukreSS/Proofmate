@@ -33,14 +33,22 @@ function App() {
 
         // Initialize blockchain system if user is authenticated
         if (user) {
-          await initializeBlockchainSystem();
+          try {
+            await initializeBlockchainSystem();
+          } catch (blockchainError) {
+            console.warn("Blockchain initialization warning:", blockchainError);
+          }
           
           // Get session information
-          const session = getSessionInfo();
-          setSessionInfo(session);
+          try {
+            const session = getSessionInfo();
+            setSessionInfo(session);
+          } catch (sessionError) {
+            console.warn("Session info warning:", sessionError);
+          }
         }
       } catch (error) {
-        console.error('Error initializing app:', error);
+        console.warn('App initialization warning:', error);
       } finally {
         setIsLoading(false);
       }
@@ -51,20 +59,34 @@ function App() {
     // Listen to auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user || null);
-        setIsLoading(false);
+        try {
+          setUser(session?.user || null);
+          setIsLoading(false);
 
-        // Initialize blockchain system for new sessions
-        if (session?.user && event === 'SIGNED_IN') {
-          await initializeBlockchainSystem();
-        }
+          // Initialize blockchain system for new sessions
+          if (session?.user && event === 'SIGNED_IN') {
+            try {
+              await initializeBlockchainSystem();
+            } catch (blockchainError) {
+              console.warn("Blockchain initialization warning:", blockchainError);
+            }
+          }
 
-        // Update session info
-        if (session?.user) {
-          const sessionInfo = getSessionInfo();
-          setSessionInfo(sessionInfo);
-        } else {
-          setSessionInfo(null);
+          // Update session info
+          if (session?.user) {
+            try {
+              const sessionInfo = getSessionInfo();
+              setSessionInfo(sessionInfo);
+            } catch (sessionError) {
+              console.warn("Session info warning:", sessionError);
+              setSessionInfo(null);
+            }
+          } else {
+            setSessionInfo(null);
+          }
+        } catch (error) {
+          console.warn("Auth state change warning:", error);
+          setIsLoading(false);
         }
       }
     );
@@ -73,9 +95,13 @@ function App() {
     const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
     const handleActivity = () => {
       if (user) {
-        updateUserActivity();
-        const session = getSessionInfo();
-        setSessionInfo(session);
+        try {
+          updateUserActivity();
+          const session = getSessionInfo();
+          setSessionInfo(session);
+        } catch (error) {
+          console.warn("Activity update warning:", error);
+        }
       }
     };
 
@@ -86,12 +112,16 @@ function App() {
     // Session monitoring interval
     const sessionMonitor = setInterval(() => {
       if (user) {
-        const session = getSessionInfo();
-        setSessionInfo(session);
-        
-        // Auto-logout if session is invalid
-        if (!session.isValid) {
-          supabase.auth.signOut();
+        try {
+          const session = getSessionInfo();
+          setSessionInfo(session);
+          
+          // Auto-logout if session is invalid
+          if (!session.isValid) {
+            supabase.auth.signOut();
+          }
+        } catch (error) {
+          console.warn("Session monitoring warning:", error);
         }
       }
     }, 60000); // Check every minute
