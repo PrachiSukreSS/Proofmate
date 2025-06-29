@@ -12,8 +12,7 @@ import {
   Shield,
   Brain,
   HelpCircle,
-  Sparkles,
-  Heart
+  Zap
 } from 'lucide-react';
 import { useToast } from '../../hooks/use-toast';
 
@@ -24,7 +23,7 @@ const ChatbotAssistant = ({ user }) => {
     {
       id: 1,
       type: 'bot',
-      content: "Hi there! 👋 I'm your friendly ProofMate assistant! I'm here to help you with voice recording, AI analysis, and any questions about our platform. What would you like to know?",
+      content: "Hi there! 👋 I'm your ProofMate assistant! I can help you with voice recording, AI analysis, and platform features. What would you like to know?",
       timestamp: new Date()
     }
   ]);
@@ -51,7 +50,7 @@ const ChatbotAssistant = ({ user }) => {
       icon: HelpCircle,
       label: 'Get Help',
       message: 'I need help with the platform',
-      color: 'text-green-600'
+      color: 'text-indigo-600'
     }
   ];
 
@@ -73,29 +72,27 @@ const ChatbotAssistant = ({ user }) => {
     setIsTyping(true);
     
     try {
-      // Simulate AI processing delay
       await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1500));
       
       const responses = {
         verification: [
-          "To verify content: 1) Go to the Verify page, 2) Upload your file, 3) Wait for AI analysis, 4) Review the detailed results with confidence scores. ✨",
-          "Our verification process uses advanced AI to analyze content authenticity, detect manipulation, and provide confidence scores. It's powered by cutting-edge technology! 🚀"
+          "To verify content: 1) Go to Timeline, 2) Upload your file, 3) Wait for AI analysis, 4) Review detailed results with confidence scores. ✨",
+          "Our verification uses advanced AI with Tavus for video analysis, ElevenLabs for voice, and Algorand blockchain for security! 🚀"
         ],
         features: [
-          "ProofMate offers amazing features: AI-powered content analysis, blockchain verification, detailed reporting, and real-time processing! 🎯",
-          "Key features include: Multi-format support (video, audio, text, images), confidence scoring, comprehensive analytics, and seamless integrations! 💫"
+          "ProofMate offers: AI-powered analysis, blockchain verification, voice recording, detailed reporting, and real-time processing! 🎯",
+          "Key features: Multi-format support, confidence scoring, analytics, Tavus video analysis, ElevenLabs voice processing! 💫"
         ],
         help: [
-          "I'm here to help! 😊 I can assist with: Platform navigation, understanding results, troubleshooting issues, and explaining features.",
-          "For technical support: Check file formats, ensure stable internet, and contact our amazing support team if issues persist! 🛠️"
+          "I'm here to help! 😊 I can assist with: Platform navigation, understanding results, troubleshooting, and explaining features.",
+          "For support: Check file formats, ensure stable internet, and our team is here to help! 🛠️"
         ],
         default: [
           "I'm here to help with ProofMate! 🌟 Ask me about verification, features, or any questions about the platform.",
-          "You can ask me about content verification, platform features, or how to use specific tools. I love helping! 💝"
+          "You can ask me about content verification, platform features, or how to use specific tools. I'm here to help! 💝"
         ]
       };
 
-      // Simple keyword matching
       const lowerMessage = userMessage.toLowerCase();
       let responseCategory = 'default';
       
@@ -172,20 +169,20 @@ const ChatbotAssistant = ({ user }) => {
     return (
       <motion.button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
       >
         <MessageCircle className="h-8 w-8 text-white group-hover:scale-110 transition-transform" />
         <motion.div
-          className="absolute -top-1 -right-1 w-6 h-6 bg-pink-500 rounded-full flex items-center justify-center"
+          className="absolute -top-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center"
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          <Sparkles className="h-3 w-3 text-white" />
+          <Zap className="h-3 w-3 text-white" />
         </motion.div>
       </motion.button>
     );
@@ -203,7 +200,7 @@ const ChatbotAssistant = ({ user }) => {
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
     >
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-500 p-4 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <motion.div 
             className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
@@ -216,7 +213,7 @@ const ChatbotAssistant = ({ user }) => {
             <div className="text-white">
               <h3 className="font-bold text-lg">ProofMate Assistant</h3>
               <p className="text-xs opacity-90 flex items-center gap-1">
-                <Sparkles className="h-3 w-3" />
+                <Zap className="h-3 w-3" />
                 AI-powered help
               </p>
             </div>
@@ -245,7 +242,7 @@ const ChatbotAssistant = ({ user }) => {
       {!isMinimized && (
         <>
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 h-96 bg-gradient-to-b from-purple-50/30 to-blue-50/30 dark:from-gray-900/30 dark:to-gray-800/30">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 h-96 bg-gradient-to-b from-blue-50/30 to-purple-50/30 dark:from-gray-900/30 dark:to-gray-800/30">
             <AnimatePresence>
               {messages.map((message) => (
                 <motion.div
@@ -258,7 +255,7 @@ const ChatbotAssistant = ({ user }) => {
                   <motion.div 
                     className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                       message.type === 'bot' 
-                        ? 'bg-gradient-to-r from-purple-500 to-blue-500' 
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-500' 
                         : 'bg-gradient-to-r from-gray-400 to-gray-500'
                     }`}
                     whileHover={{ scale: 1.1 }}
@@ -273,14 +270,14 @@ const ChatbotAssistant = ({ user }) => {
                     <motion.div 
                       className={`p-4 rounded-2xl ${
                         message.type === 'user'
-                          ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white'
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
                           : 'bg-white/80 dark:bg-gray-700/80 text-gray-900 dark:text-white shadow-lg'
                       }`}
                       whileHover={{ scale: 1.02 }}
                     >
                       <p className="text-sm leading-relaxed">{message.content}</p>
                     </motion.div>
-                    <p className="text-xs text-gray-500 mt-2 px-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 px-2">
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
@@ -294,18 +291,18 @@ const ChatbotAssistant = ({ user }) => {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex gap-3"
               >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
                   <Bot className="h-4 w-4 text-white" />
                 </div>
                 <div className="bg-white/80 dark:bg-gray-700/80 p-4 rounded-2xl shadow-lg">
                   <div className="flex space-x-1">
                     <motion.div 
-                      className="w-2 h-2 bg-purple-500 rounded-full"
+                      className="w-2 h-2 bg-blue-500 rounded-full"
                       animate={{ scale: [1, 1.5, 1] }}
                       transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
                     />
                     <motion.div 
-                      className="w-2 h-2 bg-blue-500 rounded-full"
+                      className="w-2 h-2 bg-purple-500 rounded-full"
                       animate={{ scale: [1, 1.5, 1] }}
                       transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
                     />
@@ -366,7 +363,7 @@ const ChatbotAssistant = ({ user }) => {
               <motion.button
                 onClick={handleSendMessage}
                 disabled={!inputMessage.trim()}
-                className="p-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl hover:from-purple-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >

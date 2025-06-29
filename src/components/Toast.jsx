@@ -87,7 +87,7 @@ const Toast = () => {
               className="absolute bottom-0 left-0 h-1 bg-current opacity-30 rounded-b-xl"
               initial={{ width: "100%" }}
               animate={{ width: "0%" }}
-              transition={{ duration: 3, ease: "linear" }}
+              transition={{ duration: 4, ease: "linear" }}
             />
           </motion.div>
         ))}

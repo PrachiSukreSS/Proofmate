@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 const TOAST_LIMIT = 3;
-const TOAST_REMOVE_DELAY = 3000; // Reduced to 3 seconds
+const TOAST_REMOVE_DELAY = 4000; // 4 seconds
 
 let count = 0;
 function genId() {
