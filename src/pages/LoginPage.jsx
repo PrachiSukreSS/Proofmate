@@ -294,7 +294,7 @@ const LoginPage = () => {
               <div className="text-xs text-gray-600 dark:text-gray-300">Integrity</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">&lt;1s</div>
+              <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{"<1s"}</div>
               <div className="text-xs text-gray-600 dark:text-gray-300">Auth Time</div>
             </div>
             <div className="text-center">
