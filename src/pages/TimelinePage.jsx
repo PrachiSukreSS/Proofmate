@@ -31,7 +31,7 @@ import MemoryViewer from "../components/MemoryViewer";
 import MemoryEditor from "../components/MemoryEditor";
 import { supabase } from "../utils/supabaseClient";
 import { verifyMemoryIntegrity } from "../utils/blockchainVerification";
-import { searchMemoriesWithAI } from "../utils/openaiProcessor";
+import { searchMemoriesWithAI } from "../utils/aiProcessor";
 import { useToast } from "../hooks/use-toast";
 
 const TimelinePage = ({ user }) => {

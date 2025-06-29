@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Mic, Shield, Hash, Zap, ArrowLeft, Play, Square, Brain, Target, CheckSquare, Calendar, Volume2, VolumeX, Settings, Waves, Activity, FileAudio, Upload, Download, Pause, Save, X, Video, Headphones, Blocks as Blockchain, Crown, AlertCircle, CheckCircle, Clock, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../utils/supabaseClient";
-import { processTranscriptWithOpenAI } from "../utils/openaiProcessor";
+import { processTranscriptWithAI } from "../utils/aiProcessor";
 import { storeVerifiedMemory } from "../utils/blockchainVerification";
 import {
   exportToGoogleCalendar,
@@ -431,7 +431,7 @@ const RecordMemory = ({ onBack, user }) => {
     try {
       // Step 1: AI Processing
       updateProcessingStep("AI Analysis", "processing");
-      const aiResults = await processTranscriptWithOpenAI(transcript, context);
+      const aiResults = await processTranscriptWithAI(transcript, context);
       updateProcessingStep("AI Analysis", "completed");
 
       // Step 2: Audio Analysis (Premium or Admin)
