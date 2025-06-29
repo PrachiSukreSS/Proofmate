@@ -14,6 +14,7 @@ import {
   getUserSubscriptionStatus,
 } from "../utils/integrationManager";
 import { useToast } from "../hooks/use-toast";
+import { isAdmin, getAdminSubscriptionStatus } from "../utils/adminConfig";
 
 const RecordMemory = ({ onBack, user }) => {
   const [transcript, setTranscript] = useState("");
@@ -39,6 +40,7 @@ const RecordMemory = ({ onBack, user }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [processingSteps, setProcessingSteps] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
+  const [memoryTitle, setMemoryTitle] = useState("");
 
   const mediaRecorderRef = useRef(null);
   const audioContextRef = useRef(null);
@@ -71,10 +73,10 @@ const RecordMemory = ({ onBack, user }) => {
     let interval;
     if (isListening && recordingStartTime) {
       interval = setInterval(() => {
-        setRecordingDuration(
-          Math.floor((Date.now() - recordingStartTime) / 1000)
-        );
-      }, 1000);
+        const currentTime = Date.now();
+        const elapsed = Math.floor((currentTime - recordingStartTime) / 1000);
+        setRecordingDuration(elapsed);
+      }, 100); // Update every 100ms for smooth display
     }
     return () => clearInterval(interval);
   }, [isListening, recordingStartTime]);
@@ -87,17 +89,6 @@ const RecordMemory = ({ onBack, user }) => {
       .filter((word) => word.length > 0);
     setWordCount(words.length);
   }, [transcript]);
-
-  // Auto-save functionality
-  useEffect(() => {
-    if (autoSave && transcript && wordCount > 10) {
-      const autoSaveTimer = setTimeout(() => {
-        handleQuickSave();
-      }, 30000); // Auto-save every 30 seconds
-
-      return () => clearTimeout(autoSaveTimer);
-    }
-  }, [transcript, wordCount, autoSave]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -119,6 +110,17 @@ const RecordMemory = ({ onBack, user }) => {
 
   const loadSubscriptionStatus = async () => {
     try {
+      // Check if user is admin
+      if (isAdmin(user?.email)) {
+        setSubscriptionStatus(getAdminSubscriptionStatus());
+        toast({
+          title: "Admin Access Granted",
+          description: "You have full access to all premium features",
+          variant: "success"
+        });
+        return;
+      }
+
       const status = await getUserSubscriptionStatus(user?.id);
       setSubscriptionStatus(status);
     } catch (error) {
@@ -128,6 +130,11 @@ const RecordMemory = ({ onBack, user }) => {
   };
 
   const checkPremiumFeature = (feature) => {
+    // Admin always has access
+    if (isAdmin(user?.email)) {
+      return true;
+    }
+
     if (!subscriptionStatus?.isActive || subscriptionStatus?.tier === "free") {
       toast({
         title: "Premium Feature",
@@ -155,8 +162,6 @@ const RecordMemory = ({ onBack, user }) => {
   };
 
   const analyzeAudio = async (audioBlob) => {
-    if (!checkPremiumFeature("Audio analysis")) return;
-
     updateProcessingStep("ElevenLabs Audio Analysis", "processing");
     
     try {
@@ -185,8 +190,6 @@ const RecordMemory = ({ onBack, user }) => {
   };
 
   const synthesizeVoice = async (text) => {
-    if (!checkPremiumFeature("Voice synthesis")) return;
-
     try {
       const result = await generateVoiceWithElevenLabs(
         text || "Your recording has been processed successfully!",
@@ -431,8 +434,8 @@ const RecordMemory = ({ onBack, user }) => {
       const aiResults = await processTranscriptWithOpenAI(transcript, context);
       updateProcessingStep("AI Analysis", "completed");
 
-      // Step 2: Audio Analysis (Premium)
-      if (audioBlob && subscriptionStatus?.isActive) {
+      // Step 2: Audio Analysis (Premium or Admin)
+      if (audioBlob && (subscriptionStatus?.isActive || isAdmin(user?.email))) {
         await analyzeAudio(audioBlob);
       }
 
@@ -441,12 +444,13 @@ const RecordMemory = ({ onBack, user }) => {
         type: "memory_verification",
         transcript,
         summary: aiResults.summary,
-        title: aiResults.title,
+        title: memoryTitle || aiResults.title,
         user_id: user?.id,
       });
 
       setSummaryData({
         ...aiResults,
+        title: memoryTitle || aiResults.title,
         blockchainHash: blockchainResult?.hash,
         verificationStatus: blockchainResult ? "verified" : "pending",
       });
@@ -464,40 +468,6 @@ const RecordMemory = ({ onBack, user }) => {
       });
     } finally {
       setIsProcessing(false);
-    }
-  };
-
-  const handleQuickSave = async () => {
-    if (!transcript.trim()) return;
-
-    try {
-      const quickMemory = {
-        user_id: user?.id,
-        title: `Quick Save - ${new Date().toLocaleDateString()}`,
-        transcript,
-        summary: "Quick saved memory",
-        word_count: wordCount,
-        confidence,
-        category: context,
-        priority: "medium",
-        created_at: new Date().toISOString(),
-      };
-
-      const { error } = await supabase.from("memories").insert([quickMemory]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Quick Save Complete",
-        description: "Memory saved to your timeline",
-      });
-    } catch (error) {
-      console.error("Quick save error:", error);
-      toast({
-        title: "Save Failed",
-        description: "Could not save memory",
-        variant: "destructive",
-      });
     }
   };
 
@@ -539,8 +509,8 @@ const RecordMemory = ({ onBack, user }) => {
           description: "Your memory has been saved with blockchain verification",
         });
 
-        // Synthesize confirmation message
-        if (subscriptionStatus?.isActive) {
+        // Synthesize confirmation message for premium users or admin
+        if (subscriptionStatus?.isActive || isAdmin(user?.email)) {
           await synthesizeVoice("Your memory has been saved successfully!");
         }
 
@@ -552,6 +522,7 @@ const RecordMemory = ({ onBack, user }) => {
         setConfidence(0);
         setAudioBlob(null);
         setProcessingSteps([]);
+        setMemoryTitle("");
       }
     } catch (error) {
       console.error("Save error:", error);
@@ -664,7 +635,14 @@ const RecordMemory = ({ onBack, user }) => {
               <Settings className="h-5 w-5" />
             </button>
 
-            {subscriptionStatus?.tier === "free" && (
+            {isAdmin(user?.email) && (
+              <div className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-2 rounded-lg">
+                <Crown className="h-4 w-4" />
+                <span className="font-medium">Admin</span>
+              </div>
+            )}
+
+            {!isAdmin(user?.email) && subscriptionStatus?.tier === "free" && (
               <button
                 onClick={() => navigate("/premium")}
                 className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-2 rounded-lg hover:from-amber-600 hover:to-orange-700 transition-all duration-200"
@@ -756,6 +734,20 @@ const RecordMemory = ({ onBack, user }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recording Panel */}
           <div className="space-y-6">
+            {/* Memory Title Input */}
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Memory Title
+              </label>
+              <input
+                type="text"
+                value={memoryTitle}
+                onChange={(e) => setMemoryTitle(e.target.value)}
+                placeholder="Enter a title for your memory..."
+                className="w-full p-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+
             {/* Main Recording Control */}
             <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 border border-gray-200 dark:border-gray-700 text-center">
               <div className="space-y-6">
@@ -875,14 +867,6 @@ const RecordMemory = ({ onBack, user }) => {
                 {/* Quick Actions */}
                 <div className="flex gap-2 mt-4">
                   <button
-                    onClick={handleQuickSave}
-                    disabled={!transcript.trim() || isSaving}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
-                  >
-                    <Save className="h-4 w-4" />
-                    Quick Save
-                  </button>
-                  <button
                     onClick={() => setTranscript("")}
                     disabled={isListening}
                     className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
@@ -931,7 +915,7 @@ const RecordMemory = ({ onBack, user }) => {
                       Tavus Video Analysis
                     </span>
                   </div>
-                  {subscriptionStatus?.isActive ? (
+                  {subscriptionStatus?.isActive || isAdmin(user?.email) ? (
                     <CheckCircle className="h-4 w-4 text-green-600" />
                   ) : (
                     <Crown className="h-4 w-4 text-amber-500" />
@@ -945,7 +929,7 @@ const RecordMemory = ({ onBack, user }) => {
                       ElevenLabs Voice AI
                     </span>
                   </div>
-                  {subscriptionStatus?.isActive ? (
+                  {subscriptionStatus?.isActive || isAdmin(user?.email) ? (
                     <CheckCircle className="h-4 w-4 text-green-600" />
                   ) : (
                     <Crown className="h-4 w-4 text-amber-500" />

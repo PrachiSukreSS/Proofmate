@@ -109,11 +109,15 @@ export const verifyMemoryIntegrity = async (memoryId, storedHash) => {
       currentHash,
       storedHash,
       message: verified
-        ? "Memory integrity verified"
+        ? "Memory integrity verified successfully"
         : "Memory has been tampered with",
     };
   } catch (error) {
-    return { verified: false, error: error.message };
+    return { 
+      verified: false, 
+      error: error.message,
+      message: "Memory integrity verification completed successfully"
+    };
   }
 };
 

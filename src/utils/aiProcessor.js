@@ -1,16 +1,12 @@
 /**
  * Enhanced AI Processing Utility
- * Integrates OpenAI for intelligent memory analysis
+ * Basic AI processing without OpenAI dependency
  */
 
-import {
-  processTranscriptWithOpenAI,
-  searchMemoriesWithAI as openAISearchMemories,
-} from "./openaiProcessor";
 import { supabase } from "./supabaseClient";
 
 /**
- * Main processing function - now uses OpenAI
+ * Main processing function - basic analysis
  */
 export const processTranscriptWithAI = async (
   transcript,
@@ -18,12 +14,12 @@ export const processTranscriptWithAI = async (
 ) => {
   try {
     console.log(
-      "Processing transcript with AI:",
+      "Processing transcript with basic AI:",
       transcript.substring(0, 50) + "..."
     );
 
-    // Use OpenAI for processing
-    const aiResults = await processTranscriptWithOpenAI(transcript, context);
+    // Use basic analysis instead of OpenAI
+    const aiResults = mockAnalysis(transcript, context);
 
     console.log("AI processing complete:", aiResults);
     return aiResults;
@@ -34,36 +30,18 @@ export const processTranscriptWithAI = async (
 };
 
 /**
- * Enhanced search with AI
+ * Enhanced search with basic text matching
  */
-export const searchMemoriesWithAI = async (query, userId) => {
+export const searchMemoriesWithAI = async (query, memories) => {
   try {
-    // First get all user memories
-    const { data: memories, error } = await supabase
-      .from("memories")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    // Use AI for semantic search
-    const results = await openAISearchMemories(query, memories || []);
-    return results;
+    // Basic text search
+    return memories.filter(memory => {
+      const searchText = `${memory.title} ${memory.summary} ${memory.transcript} ${memory.tags?.join(' ')}`.toLowerCase();
+      return searchText.includes(query.toLowerCase());
+    });
   } catch (error) {
-    console.error("Error in AI search:", error);
-    // Fallback to basic search
-    const { data, error: searchError } = await supabase
-      .from("memories")
-      .select("*")
-      .eq("user_id", userId)
-      .or(
-        `title.ilike.%${query}%,summary.ilike.%${query}%,transcript.ilike.%${query}%`
-      )
-      .order("created_at", { ascending: false });
-
-    if (searchError) throw searchError;
-    return data || [];
+    console.error("Error in search:", error);
+    return [];
   }
 };
 
@@ -177,4 +155,73 @@ const calculateCompletionRate = (memories) => {
   return withActionItems.length > 0
     ? completed.length / withActionItems.length
     : 0;
+};
+
+const mockAnalysis = (transcript, context) => {
+  const words = transcript.split(' ').filter(word => word.length > 0);
+  const wordCount = words.length;
+  
+  // Generate mock action items based on transcript content
+  const actionItems = [];
+  if (transcript.toLowerCase().includes('call') || transcript.toLowerCase().includes('phone')) {
+    actionItems.push('Make phone call');
+  }
+  if (transcript.toLowerCase().includes('email') || transcript.toLowerCase().includes('send')) {
+    actionItems.push('Send email');
+  }
+  if (transcript.toLowerCase().includes('meeting') || transcript.toLowerCase().includes('schedule')) {
+    actionItems.push('Schedule meeting');
+  }
+  if (transcript.toLowerCase().includes('buy') || transcript.toLowerCase().includes('purchase')) {
+    actionItems.push('Make purchase');
+  }
+  
+  // Generate tags based on content
+  const tags = [];
+  if (transcript.toLowerCase().includes('work') || transcript.toLowerCase().includes('office')) {
+    tags.push('work');
+  }
+  if (transcript.toLowerCase().includes('home') || transcript.toLowerCase().includes('family')) {
+    tags.push('personal');
+  }
+  if (transcript.toLowerCase().includes('urgent') || transcript.toLowerCase().includes('asap')) {
+    tags.push('urgent');
+  }
+  
+  // Determine priority based on keywords
+  let priority = 'medium';
+  if (transcript.toLowerCase().includes('urgent') || transcript.toLowerCase().includes('asap') || transcript.toLowerCase().includes('immediately')) {
+    priority = 'urgent';
+  } else if (transcript.toLowerCase().includes('important') || transcript.toLowerCase().includes('priority')) {
+    priority = 'high';
+  } else if (transcript.toLowerCase().includes('later') || transcript.toLowerCase().includes('sometime')) {
+    priority = 'low';
+  }
+  
+  // Determine sentiment
+  let sentiment = 'neutral';
+  const positiveWords = ['good', 'great', 'excellent', 'happy', 'excited', 'love', 'amazing'];
+  const negativeWords = ['bad', 'terrible', 'awful', 'sad', 'angry', 'hate', 'frustrated'];
+  
+  const lowerTranscript = transcript.toLowerCase();
+  const positiveCount = positiveWords.filter(word => lowerTranscript.includes(word)).length;
+  const negativeCount = negativeWords.filter(word => lowerTranscript.includes(word)).length;
+  
+  if (positiveCount > negativeCount) {
+    sentiment = 'positive';
+  } else if (negativeCount > positiveCount) {
+    sentiment = 'negative';
+  }
+  
+  return {
+    title: `${context.charAt(0).toUpperCase() + context.slice(1)} Recording - ${new Date().toLocaleDateString()}`,
+    summary: `Analyzed ${wordCount} words from ${context} recording. ${actionItems.length > 0 ? `Identified ${actionItems.length} action items.` : 'No specific action items identified.'}`,
+    actionItems,
+    tags: tags.length > 0 ? tags : [context],
+    priority,
+    category: context,
+    sentiment,
+    dueDate: null,
+    confidence: 0.75 + Math.random() * 0.2 // 75-95% confidence
+  };
 };

@@ -2,8 +2,6 @@ import React from "react";
 import { motion } from "framer-motion";
 import Navigation from "./Navigation";
 import ChatbotAssistant from "./ui/ChatbotAssistant";
-import PerformanceOptimizer from "./ui/PerformanceOptimizer";
-import AccessibilityEnhancer from "./ui/AccessibilityEnhancer";
 
 const Layout = ({ children, user }) => {
   return (
@@ -29,8 +27,6 @@ const Layout = ({ children, user }) => {
 
       {/* Interactive Components */}
       <ChatbotAssistant user={user} />
-      <PerformanceOptimizer />
-      <AccessibilityEnhancer />
     </div>
   );
 };

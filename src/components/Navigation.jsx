@@ -48,7 +48,7 @@ const Navigation = ({ user }) => {
           {/* Logo */}
           <Link 
             to="/" 
-            className="flex items-center gap-3 font-bold text-xl text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
+            className="flex items-center gap-3 font-bold text-xl text-purple-600 dark:text-purple-400 transition-colors"
           >
             <div className="p-2 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg">
               <Mic className="h-5 w-5 text-white" />
@@ -64,10 +64,10 @@ const Navigation = ({ user }) => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors duration-200 ${
                     isActive(item.path)
                       ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      : 'text-gray-600 dark:text-gray-300'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -79,7 +79,7 @@ const Navigation = ({ user }) => {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ml-2"
+              className="p-2 text-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200 ml-2"
               title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -90,14 +90,14 @@ const Navigation = ({ user }) => {
               <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-200 dark:border-gray-700">
                 <Link
                   to="/profile"
-                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
+                  className="p-2 text-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200"
                   title="Profile"
                 >
                   <User className="h-5 w-5" />
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
+                  className="p-2 text-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200"
                   title="Logout"
                 >
                   <LogOut className="h-5 w-5" />
@@ -106,7 +106,7 @@ const Navigation = ({ user }) => {
             ) : (
               <Link
                 to="/login"
-                className="ml-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg transition-all duration-200 font-medium"
+                className="ml-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium"
               >
                 Login
               </Link>
@@ -116,7 +116,7 @@ const Navigation = ({ user }) => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 transition-colors rounded-lg"
+            className="md:hidden p-2 text-gray-600 dark:text-gray-300 transition-colors rounded-lg"
           >
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -138,10 +138,10 @@ const Navigation = ({ user }) => {
                     key={item.path}
                     to={item.path}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
                       isActive(item.path)
                         ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300'
-                        : 'text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        : 'text-gray-600 dark:text-gray-300'
                     }`}
                   >
                     <Icon className="h-5 w-5" />
@@ -153,7 +153,7 @@ const Navigation = ({ user }) => {
               {/* Mobile Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
+                className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200"
               >
                 {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 <span className="font-medium">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
@@ -165,7 +165,7 @@ const Navigation = ({ user }) => {
                   <Link
                     to="/profile"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
+                    className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200"
                   >
                     <User className="h-5 w-5" />
                     <span className="font-medium">Profile</span>
@@ -175,7 +175,7 @@ const Navigation = ({ user }) => {
                       handleLogout();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 w-full"
+                    className="flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 rounded-lg transition-colors duration-200 w-full"
                   >
                     <LogOut className="h-5 w-5" />
                     <span className="font-medium">Logout</span>
@@ -185,7 +185,7 @@ const Navigation = ({ user }) => {
                 <Link
                   to="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="mt-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-3 rounded-lg transition-all duration-200 text-center font-medium"
+                  className="mt-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-3 rounded-lg transition-colors duration-200 text-center font-medium"
                 >
                   Login
                 </Link>

@@ -9,12 +9,12 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 
 // Pages
 import HomePage from "./pages/HomePage";
-import DashboardPage from "./pages/DashboardPage";
 import TimelinePage from "./pages/TimelinePage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 import PremiumPage from "./pages/PremiumPage";
+import PaymentPage from "./pages/PaymentPage";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -58,11 +58,11 @@ function App() {
             <AnimatePresence mode="wait">
               <Routes>
                 <Route path="/" element={<HomePage user={user} />} />
-                <Route path="/dashboard" element={<DashboardPage user={user} />} />
                 <Route path="/timeline" element={<TimelinePage user={user} />} />
                 <Route path="/analytics" element={<AnalyticsPage user={user} />} />
                 <Route path="/profile" element={<ProfilePage user={user} />} />
                 <Route path="/premium" element={<PremiumPage user={user} />} />
+                <Route path="/payment" element={<PaymentPage user={user} />} />
                 <Route path="/login" element={<LoginPage />} />
               </Routes>
             </AnimatePresence>

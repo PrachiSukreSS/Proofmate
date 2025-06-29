@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Crown, Check, Zap, Shield, Cloud, Headphones, Star, Video, Mic, Brain, Blocks as Blockchain, CreditCard, Users, Globe, Award } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { getSubscriptionStatus, getAvailableProducts, purchaseSubscription } from "../utils/revenueCatClient";
@@ -9,6 +10,7 @@ const PremiumPage = ({ user }) => {
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [availableProducts, setAvailableProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,25 +51,8 @@ const PremiumPage = ({ user }) => {
       return;
     }
 
-    try {
-      const result = await purchaseSubscription(productId);
-      if (result.success) {
-        toast({
-          title: "Upgrade Successful! 🎉",
-          description: "Welcome to ProofMate Premium!",
-          variant: "success"
-        });
-        await loadSubscriptionData();
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (error) {
-      toast({
-        title: "Upgrade Failed",
-        description: error.message || "Please try again later",
-        variant: "destructive"
-      });
-    }
+    // Redirect to payment page
+    navigate('/payment', { state: { productId, plan: selectedPlan } });
   };
 
   const features = {
