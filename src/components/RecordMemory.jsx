@@ -113,18 +113,13 @@ const RecordMemory = ({ onBack, user }) => {
       // Check if user is admin
       if (isAdmin(user?.email)) {
         setSubscriptionStatus(getAdminSubscriptionStatus());
-        toast({
-          title: "Admin Access Granted",
-          description: "You have full access to all premium features",
-          variant: "success"
-        });
         return;
       }
 
       const status = await getUserSubscriptionStatus(user?.id);
       setSubscriptionStatus(status);
     } catch (error) {
-      console.error("Error loading subscription status:", error);
+      console.warn("Error loading subscription status:", error);
       setSubscriptionStatus({ tier: "free", isActive: false });
     }
   };
@@ -169,10 +164,6 @@ const RecordMemory = ({ onBack, user }) => {
       if (analysis.success) {
         updateProcessingStep("ElevenLabs Audio Analysis", "completed");
         console.log("Voice Analysis Result:", analysis);
-        toast({
-          title: "Audio Analysis Complete",
-          description: "Voice characteristics analyzed successfully",
-        });
         return analysis;
       } else {
         updateProcessingStep("ElevenLabs Audio Analysis", "failed");
@@ -180,11 +171,7 @@ const RecordMemory = ({ onBack, user }) => {
       }
     } catch (error) {
       updateProcessingStep("ElevenLabs Audio Analysis", "failed");
-      toast({
-        title: "Analysis Failed",
-        description: "Voice analysis could not be completed",
-        variant: "destructive",
-      });
+      console.warn("Audio analysis warning:", error);
       return null;
     }
   };
@@ -198,13 +185,9 @@ const RecordMemory = ({ onBack, user }) => {
       if (result.success) {
         const audio = new Audio(result.audioUrl);
         audio.play();
-        toast({
-          title: "Voice Synthesis Complete",
-          description: "Generated voice message is playing",
-        });
       }
     } catch (error) {
-      console.error("Voice synthesis error:", error);
+      console.warn("Voice synthesis warning:", error);
     }
   };
 
@@ -216,10 +199,6 @@ const RecordMemory = ({ onBack, user }) => {
       if (result.success) {
         updateProcessingStep("Algorand Blockchain Verification", "completed");
         console.log("Blockchain Verification:", result);
-        toast({
-          title: "Blockchain Verification Complete",
-          description: "Memory verified on Algorand blockchain",
-        });
         return result;
       } else {
         updateProcessingStep("Algorand Blockchain Verification", "failed");
@@ -227,11 +206,7 @@ const RecordMemory = ({ onBack, user }) => {
       }
     } catch (error) {
       updateProcessingStep("Algorand Blockchain Verification", "failed");
-      toast({
-        title: "Verification Failed",
-        description: "Blockchain verification could not be completed",
-        variant: "destructive",
-      });
+      console.warn("Blockchain verification warning:", error);
       return null;
     }
   };
@@ -295,7 +270,7 @@ const RecordMemory = ({ onBack, user }) => {
       updateAudioLevel();
       return stream;
     } catch (error) {
-      console.error("Error setting up audio:", error);
+      console.warn("Audio setup warning:", error);
       toast({
         title: "Audio Setup Error",
         description: "Could not access microphone for visualization",
@@ -358,7 +333,7 @@ const RecordMemory = ({ onBack, user }) => {
       };
 
       recognition.onerror = (event) => {
-        console.error("Speech recognition error:", event.error);
+        console.warn("Speech recognition error:", event.error);
         toast({
           title: "Recognition Error",
           description: "Speech recognition encountered an error",
@@ -377,7 +352,7 @@ const RecordMemory = ({ onBack, user }) => {
       recognition.start();
       setRecognitionInstance(recognition);
     } catch (error) {
-      console.error("Error starting recognition:", error);
+      console.warn("Recognition start error:", error);
       toast({
         title: "Recording Error",
         description: "Could not start recording",
@@ -460,7 +435,7 @@ const RecordMemory = ({ onBack, user }) => {
         description: "Your memory has been analyzed and verified",
       });
     } catch (error) {
-      console.error("Processing error:", error);
+      console.warn("Processing error:", error);
       toast({
         title: "Processing Failed",
         description: "Could not process the recording",
@@ -481,32 +456,44 @@ const RecordMemory = ({ onBack, user }) => {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to save memories",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       const memoryData = {
-        user_id: user?.id,
+        user_id: user.id,
         title: summaryData.title,
         transcript,
         summary: summaryData.summary,
-        action_items: summaryData.actionItems,
-        tags: summaryData.tags,
-        priority: summaryData.priority,
-        category: summaryData.category,
-        sentiment: summaryData.sentiment,
-        due_date: summaryData.dueDate,
+        action_items: summaryData.actionItems || [],
+        tags: summaryData.tags || [],
+        priority: summaryData.priority || "medium",
+        category: summaryData.category || context,
+        sentiment: summaryData.sentiment || "neutral",
+        due_date: summaryData.dueDate || null,
         word_count: wordCount,
-        confidence: summaryData.confidence,
+        confidence: summaryData.confidence || confidence,
         audio_duration: recordingDuration,
         recording_quality: recordingQuality,
         created_at: new Date().toISOString(),
       };
 
+      console.log("Saving memory data:", memoryData);
+
       const result = await storeVerifiedMemory(memoryData);
 
-      if (result.memory) {
+      if (result && result.memory) {
         toast({
           title: "Memory Saved Successfully",
           description: "Your memory has been saved with blockchain verification",
+          variant: "success"
         });
 
         // Synthesize confirmation message for premium users or admin
@@ -523,12 +510,19 @@ const RecordMemory = ({ onBack, user }) => {
         setAudioBlob(null);
         setProcessingSteps([]);
         setMemoryTitle("");
+
+        // Navigate to timeline after successful save
+        setTimeout(() => {
+          navigate("/timeline");
+        }, 2000);
+      } else {
+        throw new Error("Failed to save memory - no result returned");
       }
     } catch (error) {
       console.error("Save error:", error);
       toast({
         title: "Save Failed",
-        description: "Could not save memory",
+        description: error.message || "Could not save memory. Please try again.",
         variant: "destructive",
       });
     } finally {
