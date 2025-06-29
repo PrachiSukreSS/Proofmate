@@ -1,22 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {
-  Crown,
-  Check,
-  Zap,
-  Shield,
-  Cloud,
-  Headphones,
-  Star,
-  Video,
-  Mic,
-  Brain,
-  Blockchain,
-  CreditCard,
-  Users,
-  Globe,
-  Award
-} from "lucide-react";
+import { Crown, Check, Zap, Shield, Cloud, Headphones, Star, Video, Mic, Brain, Blocks as Blockchain, CreditCard, Users, Globe, Award } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { getSubscriptionStatus, getAvailableProducts, purchaseSubscription } from "../utils/revenueCatClient";
 
