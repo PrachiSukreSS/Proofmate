@@ -1,36 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  Mic,
-  Shield,
-  Hash,
-  Zap,
-  ArrowLeft,
-  Play,
-  Square,
-  Brain,
-  Target,
-  CheckSquare,
-  Calendar,
-  Volume2,
-  VolumeX,
-  Settings,
-  Waves,
-  Activity,
-  FileAudio,
-  Upload,
-  Download,
-  Pause,
-  Save,
-  X,
-  Video,
-  Headphones,
-  Blockchain,
-  Crown,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  BarChart3,
-} from "lucide-react";
+import { Mic, Shield, Hash, Zap, ArrowLeft, Play, Square, Brain, Target, CheckSquare, Calendar, Volume2, VolumeX, Settings, Waves, Activity, FileAudio, Upload, Download, Pause, Save, X, Video, Headphones, Blocks as Blockchain, Crown, AlertCircle, CheckCircle, Clock, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../utils/supabaseClient";
 import { processTranscriptWithOpenAI } from "../utils/openaiProcessor";
