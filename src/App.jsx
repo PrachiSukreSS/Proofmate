@@ -6,6 +6,8 @@ import Toast from "./components/Toast";
 import LoadingScreen from "./components/LoadingScreen";
 import { supabase } from "./utils/supabaseClient";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { updateUserActivity, getSessionInfo } from "./utils/secureAuthSystem";
+import { initializeBlockchainSystem } from "./utils/blockchainMemorySystem";
 
 // Pages
 import HomePage from "./pages/HomePage";
@@ -19,32 +21,89 @@ import PaymentPage from "./pages/PaymentPage";
 function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sessionInfo, setSessionInfo] = useState(null);
 
   useEffect(() => {
-    // Get initial user
-    const getInitialUser = async () => {
+    // Initialize the application
+    const initializeApp = async () => {
       try {
+        // Get initial user
         const { data: { user } } = await supabase.auth.getUser();
         setUser(user);
+
+        // Initialize blockchain system if user is authenticated
+        if (user) {
+          await initializeBlockchainSystem();
+          
+          // Get session information
+          const session = getSessionInfo();
+          setSessionInfo(session);
+        }
       } catch (error) {
-        console.error('Error fetching user:', error);
+        console.error('Error initializing app:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    getInitialUser();
+    initializeApp();
 
     // Listen to auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setUser(session?.user || null);
         setIsLoading(false);
+
+        // Initialize blockchain system for new sessions
+        if (session?.user && event === 'SIGNED_IN') {
+          await initializeBlockchainSystem();
+        }
+
+        // Update session info
+        if (session?.user) {
+          const sessionInfo = getSessionInfo();
+          setSessionInfo(sessionInfo);
+        } else {
+          setSessionInfo(null);
+        }
       }
     );
 
-    return () => authListener.subscription.unsubscribe();
-  }, []);
+    // Set up activity monitoring
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    const handleActivity = () => {
+      if (user) {
+        updateUserActivity();
+        const session = getSessionInfo();
+        setSessionInfo(session);
+      }
+    };
+
+    activityEvents.forEach(event => {
+      document.addEventListener(event, handleActivity, true);
+    });
+
+    // Session monitoring interval
+    const sessionMonitor = setInterval(() => {
+      if (user) {
+        const session = getSessionInfo();
+        setSessionInfo(session);
+        
+        // Auto-logout if session is invalid
+        if (!session.isValid) {
+          supabase.auth.signOut();
+        }
+      }
+    }, 60000); // Check every minute
+
+    return () => {
+      authListener.subscription.unsubscribe();
+      activityEvents.forEach(event => {
+        document.removeEventListener(event, handleActivity, true);
+      });
+      clearInterval(sessionMonitor);
+    };
+  }, [user]);
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -54,7 +113,7 @@ function App() {
     <ThemeProvider>
       <Router>
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
-          <Layout user={user}>
+          <Layout user={user} sessionInfo={sessionInfo}>
             <AnimatePresence mode="wait">
               <Routes>
                 <Route path="/" element={<HomePage user={user} />} />

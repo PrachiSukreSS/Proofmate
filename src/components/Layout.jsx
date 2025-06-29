@@ -2,8 +2,9 @@ import React from "react";
 import { motion } from "framer-motion";
 import Navigation from "./Navigation";
 import ChatbotAssistant from "./ui/ChatbotAssistant";
+import SessionMonitor from "./ui/SessionMonitor";
 
-const Layout = ({ children, user }) => {
+const Layout = ({ children, user, sessionInfo }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-blue-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-500">
       
@@ -13,7 +14,7 @@ const Layout = ({ children, user }) => {
       </div>
 
       {/* Navigation */}
-      <Navigation user={user} />
+      <Navigation user={user} sessionInfo={sessionInfo} />
 
       {/* Main Content */}
       <motion.main 
@@ -27,6 +28,7 @@ const Layout = ({ children, user }) => {
 
       {/* Interactive Components */}
       <ChatbotAssistant user={user} />
+      {user && sessionInfo && <SessionMonitor sessionInfo={sessionInfo} />}
     </div>
   );
 };

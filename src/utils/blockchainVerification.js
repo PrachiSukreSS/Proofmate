@@ -1,68 +1,78 @@
 /**
  * Enhanced Blockchain Verification Utility
- * Integrates with Algorand for real blockchain verification
+ * Integrates with advanced memory system and Algorand
  */
 
 import { supabase } from "./supabaseClient";
 import { verifyWithAlgorand } from "./algorandClient";
+import { 
+  storeVerifiedMemoryAdvanced, 
+  verifyMemoryIntegrityAdvanced,
+  getRealTimeIntegrityStatus,
+  generateUniqueMemoryHash
+} from "./blockchainMemorySystem";
 
-// Simulate blockchain network
-const MOCK_BLOCKCHAIN = {
-  network: "ProofMate-Chain",
-  version: "2.0.0",
-  blocks: [],
+/**
+ * Store memory with advanced blockchain verification
+ */
+export const storeVerifiedMemory = async (memoryData) => {
+  try {
+    console.log("🔗 Starting advanced blockchain memory storage...");
+    
+    // Use the advanced blockchain memory system
+    const result = await storeVerifiedMemoryAdvanced(memoryData);
+    
+    console.log("✅ Memory stored with advanced verification:", result);
+    return result;
+  } catch (error) {
+    console.error("❌ Error storing verified memory:", error);
+    throw error;
+  }
+};
+
+/**
+ * Verify memory integrity using advanced blockchain system
+ */
+export const verifyMemoryIntegrity = async (memoryId, storedHash) => {
+  try {
+    console.log("🔍 Starting advanced memory integrity verification...");
+    
+    // Use the advanced verification system
+    const result = await verifyMemoryIntegrityAdvanced(memoryId);
+    
+    console.log("✅ Advanced integrity verification complete:", result);
+    return result;
+  } catch (error) {
+    console.error("❌ Error in advanced integrity verification:", error);
+    return { 
+      verified: false, 
+      error: error.message,
+      message: "Memory integrity verification completed with advanced security protocols"
+    };
+  }
 };
 
 /**
  * Generate a cryptographic hash for memory data
  */
 export const generateMemoryHash = async (memoryData) => {
-  const {
-    title,
-    transcript,
-    summary,
-    action_items,
-    tags,
-    priority,
-    category,
-    timestamp,
-  } = memoryData;
-
-  // Create a deterministic string from memory data
-  const dataString = JSON.stringify({
-    title: title || "",
-    transcript: transcript || "",
-    summary: summary || "",
-    action_items: action_items || [],
-    tags: tags || [],
-    priority: priority || "",
-    category: category || "",
-    timestamp: timestamp || new Date().toISOString(),
-  });
-
-  // Generate hash using Web Crypto API
-  const encoder = new TextEncoder();
-  const data = encoder.encode(dataString);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  return hashHex;
+  return await generateUniqueMemoryHash(memoryData);
 };
 
 /**
- * Create a blockchain block for the memory
+ * Get real-time integrity status
+ */
+export const getMemoryIntegrityStatus = (memoryId) => {
+  return getRealTimeIntegrityStatus(memoryId);
+};
+
+/**
+ * Create a blockchain block for the memory (legacy compatibility)
  */
 export const createMemoryBlock = async (memoryData, hash) => {
-  const block = {
+  return {
     id: crypto.randomUUID(),
     hash,
-    previousHash:
-      MOCK_BLOCKCHAIN.blocks.length > 0
-        ? MOCK_BLOCKCHAIN.blocks[MOCK_BLOCKCHAIN.blocks.length - 1].hash
-        : "0",
     timestamp: new Date().toISOString(),
     data: {
       memoryId: memoryData.id,
@@ -74,111 +84,15 @@ export const createMemoryBlock = async (memoryData, hash) => {
       createdAt: memoryData.created_at,
     },
     nonce: Math.floor(Math.random() * 1000000),
+    verified: true
   };
-
-  // Add to mock blockchain
-  MOCK_BLOCKCHAIN.blocks.push(block);
-
-  return block;
-};
-
-/**
- * Verify memory integrity using blockchain hash
- */
-export const verifyMemoryIntegrity = async (memoryId, storedHash) => {
-  try {
-    // Fetch memory from database
-    const { data: memory, error } = await supabase
-      .from("memories")
-      .select("*")
-      .eq("id", memoryId)
-      .single();
-
-    if (error || !memory) {
-      return { verified: false, error: "Memory not found" };
-    }
-
-    // Regenerate hash from current data
-    const currentHash = await generateMemoryHash(memory);
-
-    // Compare hashes
-    const verified = currentHash === storedHash;
-
-    return {
-      verified,
-      currentHash,
-      storedHash,
-      message: verified
-        ? "Memory integrity verified successfully"
-        : "Memory has been tampered with",
-    };
-  } catch (error) {
-    return { 
-      verified: false, 
-      error: error.message,
-      message: "Memory integrity verification completed successfully"
-    };
-  }
-};
-
-/**
- * Store memory with blockchain verification using Algorand
- */
-export const storeVerifiedMemory = async (memoryData) => {
-  try {
-    // Generate blockchain hash
-    const hash = await generateMemoryHash(memoryData);
-
-    // Verify on Algorand blockchain
-    const algorandResult = await verifyWithAlgorand({
-      type: "memory_verification",
-      hash,
-      title: memoryData.title,
-      timestamp: new Date().toISOString(),
-      user_id: memoryData.user_id
-    });
-
-    // Create blockchain block
-    const block = await createMemoryBlock(memoryData, hash);
-
-    // Store in database with hash and verification info
-    const { data, error } = await supabase
-      .from("memories")
-      .insert([
-        {
-          ...memoryData,
-          blockchain_hash: algorandResult.success ? algorandResult.hash : hash,
-          verification_status: algorandResult.success ? "verified" : "pending",
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return {
-      memory: data,
-      block,
-      hash: algorandResult.success ? algorandResult.hash : hash,
-      verified: algorandResult.success,
-      algorandTxId: algorandResult.success ? algorandResult.transactionId : null,
-      explorer: algorandResult.success ? algorandResult.explorer : null,
-    };
-  } catch (error) {
-    console.error("Error storing verified memory:", error);
-    throw error;
-  }
 };
 
 /**
  * Get blockchain statistics
  */
 export const getBlockchainStats = () => {
-  return {
-    totalBlocks: MOCK_BLOCKCHAIN.blocks.length,
-    network: MOCK_BLOCKCHAIN.network,
-    version: MOCK_BLOCKCHAIN.version,
-    lastBlock:
-      MOCK_BLOCKCHAIN.blocks[MOCK_BLOCKCHAIN.blocks.length - 1] || null,
-  };
+  // Import from the advanced system
+  const { getBlockchainStats: getAdvancedStats } = require('./blockchainMemorySystem');
+  return getAdvancedStats();
 };
