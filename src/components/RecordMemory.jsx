@@ -14,7 +14,6 @@ import {
   getUserSubscriptionStatus,
 } from "../utils/integrationManager";
 import { useToast } from "../hooks/use-toast";
-import { isAdmin, getAdminSubscriptionStatus } from "../utils/adminConfig";
 
 const RecordMemory = ({ onBack, user }) => {
   const [transcript, setTranscript] = useState("");
@@ -110,12 +109,6 @@ const RecordMemory = ({ onBack, user }) => {
 
   const loadSubscriptionStatus = async () => {
     try {
-      // Check if user is admin
-      if (isAdmin(user?.email)) {
-        setSubscriptionStatus(getAdminSubscriptionStatus());
-        return;
-      }
-
       const status = await getUserSubscriptionStatus(user?.id);
       setSubscriptionStatus(status);
     } catch (error) {
@@ -125,11 +118,6 @@ const RecordMemory = ({ onBack, user }) => {
   };
 
   const checkPremiumFeature = (feature) => {
-    // Admin always has access
-    if (isAdmin(user?.email)) {
-      return true;
-    }
-
     if (!subscriptionStatus?.isActive || subscriptionStatus?.tier === "free") {
       toast({
         title: "Premium Feature",
@@ -409,8 +397,8 @@ const RecordMemory = ({ onBack, user }) => {
       const aiResults = await processTranscriptWithAI(transcript, context);
       updateProcessingStep("AI Analysis", "completed");
 
-      // Step 2: Audio Analysis (Premium or Admin)
-      if (audioBlob && (subscriptionStatus?.isActive || isAdmin(user?.email))) {
+      // Step 2: Audio Analysis (Premium)
+      if (audioBlob && subscriptionStatus?.isActive) {
         await analyzeAudio(audioBlob);
       }
 
@@ -496,8 +484,8 @@ const RecordMemory = ({ onBack, user }) => {
           variant: "success"
         });
 
-        // Synthesize confirmation message for premium users or admin
-        if (subscriptionStatus?.isActive || isAdmin(user?.email)) {
+        // Synthesize confirmation message for premium users
+        if (subscriptionStatus?.isActive) {
           await synthesizeVoice("Your memory has been saved successfully!");
         }
 
@@ -629,14 +617,7 @@ const RecordMemory = ({ onBack, user }) => {
               <Settings className="h-5 w-5" />
             </button>
 
-            {isAdmin(user?.email) && (
-              <div className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-2 rounded-lg">
-                <Crown className="h-4 w-4" />
-                <span className="font-medium">Admin</span>
-              </div>
-            )}
-
-            {!isAdmin(user?.email) && subscriptionStatus?.tier === "free" && (
+            {subscriptionStatus?.tier === "free" && (
               <button
                 onClick={() => navigate("/premium")}
                 className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-2 rounded-lg hover:from-amber-600 hover:to-orange-700 transition-all duration-200"
@@ -909,7 +890,7 @@ const RecordMemory = ({ onBack, user }) => {
                       Tavus Video Analysis
                     </span>
                   </div>
-                  {subscriptionStatus?.isActive || isAdmin(user?.email) ? (
+                  {subscriptionStatus?.isActive ? (
                     <CheckCircle className="h-4 w-4 text-green-600" />
                   ) : (
                     <Crown className="h-4 w-4 text-amber-500" />
@@ -923,7 +904,7 @@ const RecordMemory = ({ onBack, user }) => {
                       ElevenLabs Voice AI
                     </span>
                   </div>
-                  {subscriptionStatus?.isActive || isAdmin(user?.email) ? (
+                  {subscriptionStatus?.isActive ? (
                     <CheckCircle className="h-4 w-4 text-green-600" />
                   ) : (
                     <Crown className="h-4 w-4 text-amber-500" />
