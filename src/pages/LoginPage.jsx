@@ -18,7 +18,6 @@ import {
   Crown
 } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
-import { authenticateUser, registerUser } from "../utils/secureAuthSystem";
 import { isAdmin } from "../utils/adminConfig";
 import { supabase } from "../utils/supabaseClient";
 
@@ -149,27 +148,54 @@ const LoginPage = () => {
       // Simulate security checks
       await simulateSecurityChecks();
 
-      let result;
+      let data, error;
       
       if (isLogin) {
         // Sign in
-        result = await authenticateUser(email, password);
+        const authResult = await supabase.auth.signInWithPassword({
+          email: email.toLowerCase().trim(),
+          password
+        });
+        data = authResult.data;
+        error = authResult.error;
       } else {
         // Sign up
-        result = await registerUser(email, password, {
-          full_name: fullName,
-          username: email.split('@')[0]
+        const authResult = await supabase.auth.signUp({
+          email: email.toLowerCase().trim(),
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+              username: email.split('@')[0]
+            }
+          }
         });
+        data = authResult.data;
+        error = authResult.error;
       }
 
-      if (result.success) {
-        const isUserAdmin = result.user ? isAdmin(result.user.email) : false;
+      if (error) {
+        let friendlyMessage = "Please check your credentials and try again.";
+        
+        if (error.message.includes("Invalid login credentials")) {
+          friendlyMessage = "Invalid email or password. Please check your credentials.";
+        } else if (error.message.includes("already registered")) {
+          friendlyMessage = "This email is already registered. Please try logging in instead.";
+        } else if (error.message.includes("Email not confirmed")) {
+          friendlyMessage = "Please check your email and confirm your account.";
+        }
+        
+        throw new Error(friendlyMessage);
+      }
+
+      if (data.user) {
+        const isUserAdmin = isAdmin(data.user.email);
         
         toast({
           title: isLogin ? "Welcome back!" : "Account created!",
           description: isLogin 
             ? `Successfully logged in${isUserAdmin ? ' with admin privileges' : ''}`
-            : result.needsEmailConfirmation 
+            : !data.user.email_confirmed_at 
               ? "Please check your email to verify your account"
               : "Account created successfully",
           variant: "success"
@@ -180,7 +206,7 @@ const LoginPage = () => {
           navigate("/", { replace: true });
         }, 1000);
       } else {
-        throw new Error(result.error || "Authentication failed");
+        throw new Error("Authentication failed");
       }
     } catch (error) {
       console.error("Auth error:", error);

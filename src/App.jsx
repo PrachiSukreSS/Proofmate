@@ -6,8 +6,6 @@ import Toast from "./components/Toast";
 import LoadingScreen from "./components/LoadingScreen";
 import { supabase } from "./utils/supabaseClient";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { updateUserActivity, getSessionInfo } from "./utils/secureAuthSystem";
-import { initializeBlockchainSystem } from "./utils/blockchainMemorySystem";
 
 // Pages
 import HomePage from "./pages/HomePage";
@@ -21,7 +19,6 @@ import PaymentPage from "./pages/PaymentPage";
 function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [sessionInfo, setSessionInfo] = useState(null);
 
   useEffect(() => {
     // Initialize the application
@@ -30,23 +27,6 @@ function App() {
         // Get initial user
         const { data: { user } } = await supabase.auth.getUser();
         setUser(user);
-
-        // Initialize blockchain system if user is authenticated
-        if (user) {
-          try {
-            await initializeBlockchainSystem();
-          } catch (blockchainError) {
-            console.warn("Blockchain initialization warning:", blockchainError);
-          }
-          
-          // Get session information
-          try {
-            const session = getSessionInfo();
-            setSessionInfo(session);
-          } catch (sessionError) {
-            console.warn("Session info warning:", sessionError);
-          }
-        }
       } catch (error) {
         console.warn('App initialization warning:', error);
       } finally {
@@ -62,28 +42,6 @@ function App() {
         try {
           setUser(session?.user || null);
           setIsLoading(false);
-
-          // Initialize blockchain system for new sessions
-          if (session?.user && event === 'SIGNED_IN') {
-            try {
-              await initializeBlockchainSystem();
-            } catch (blockchainError) {
-              console.warn("Blockchain initialization warning:", blockchainError);
-            }
-          }
-
-          // Update session info
-          if (session?.user) {
-            try {
-              const sessionInfo = getSessionInfo();
-              setSessionInfo(sessionInfo);
-            } catch (sessionError) {
-              console.warn("Session info warning:", sessionError);
-              setSessionInfo(null);
-            }
-          } else {
-            setSessionInfo(null);
-          }
         } catch (error) {
           console.warn("Auth state change warning:", error);
           setIsLoading(false);
@@ -91,49 +49,10 @@ function App() {
       }
     );
 
-    // Set up activity monitoring
-    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    const handleActivity = () => {
-      if (user) {
-        try {
-          updateUserActivity();
-          const session = getSessionInfo();
-          setSessionInfo(session);
-        } catch (error) {
-          console.warn("Activity update warning:", error);
-        }
-      }
-    };
-
-    activityEvents.forEach(event => {
-      document.addEventListener(event, handleActivity, true);
-    });
-
-    // Session monitoring interval
-    const sessionMonitor = setInterval(() => {
-      if (user) {
-        try {
-          const session = getSessionInfo();
-          setSessionInfo(session);
-          
-          // Auto-logout if session is invalid
-          if (!session.isValid) {
-            supabase.auth.signOut();
-          }
-        } catch (error) {
-          console.warn("Session monitoring warning:", error);
-        }
-      }
-    }, 60000); // Check every minute
-
     return () => {
       authListener.subscription.unsubscribe();
-      activityEvents.forEach(event => {
-        document.removeEventListener(event, handleActivity, true);
-      });
-      clearInterval(sessionMonitor);
     };
-  }, [user]);
+  }, []);
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -143,7 +62,7 @@ function App() {
     <ThemeProvider>
       <Router>
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
-          <Layout user={user} sessionInfo={sessionInfo}>
+          <Layout user={user}>
             <AnimatePresence mode="wait">
               <Routes>
                 <Route path="/" element={<HomePage user={user} />} />
