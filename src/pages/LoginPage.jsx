@@ -15,10 +15,8 @@ import {
   CheckCircle,
   AlertCircle,
   Loader,
-  Crown
 } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
-import { isAdmin } from "../utils/adminConfig";
 import { supabase } from "../utils/supabaseClient";
 
 const LoginPage = () => {
@@ -189,12 +187,10 @@ const LoginPage = () => {
       }
 
       if (data.user) {
-        const isUserAdmin = isAdmin(data.user.email);
-        
         toast({
           title: isLogin ? "Welcome back!" : "Account created!",
           description: isLogin 
-            ? `Successfully logged in${isUserAdmin ? ' with admin privileges' : ''}`
+            ? "Successfully logged in"
             : !data.user.email_confirmed_at 
               ? "Please check your email to verify your account"
               : "Account created successfully",
@@ -428,11 +424,6 @@ const LoginPage = () => {
                     placeholder="Enter your email"
                     required
                   />
-                  {email === "prachisukre2005@gmail.com" && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                      <Crown className="h-5 w-5 text-amber-500" title="Admin Account" />
-                    </div>
-                  )}
                 </div>
               </div>
 
