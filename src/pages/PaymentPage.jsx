@@ -77,15 +77,6 @@ const PaymentPage = ({ user }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to complete your purchase",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsProcessing(true);
 
     try {

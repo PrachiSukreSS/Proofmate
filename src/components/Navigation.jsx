@@ -86,31 +86,15 @@ const Navigation = ({ user }) => {
             </button>
             
             {/* User Menu */}
-            {user ? (
-              <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-200 dark:border-gray-700">
-                <Link
-                  to="/profile"
-                  className="p-2 text-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200"
-                  title="Profile"
-                >
-                  <User className="h-5 w-5" />
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="p-2 text-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200"
-                  title="Logout"
-                >
-                  <LogOut className="h-5 w-5" />
-                </button>
-              </div>
-            ) : (
+            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-200 dark:border-gray-700">
               <Link
-                to="/login"
-                className="ml-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium"
+                to="/profile"
+                className="p-2 text-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200"
+                title="Profile"
               >
-                Login
+                <User className="h-5 w-5" />
               </Link>
-            )}
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -160,36 +144,16 @@ const Navigation = ({ user }) => {
               </button>
               
               {/* Mobile User Menu */}
-              {user ? (
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4 space-y-2">
-                  <Link
-                    to="/profile"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200"
-                  >
-                    <User className="h-5 w-5" />
-                    <span className="font-medium">Profile</span>
-                  </Link>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 rounded-lg transition-colors duration-200 w-full"
-                  >
-                    <LogOut className="h-5 w-5" />
-                    <span className="font-medium">Logout</span>
-                  </button>
-                </div>
-              ) : (
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4 space-y-2">
                 <Link
-                  to="/login"
+                  to="/profile"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="mt-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-3 rounded-lg transition-colors duration-200 text-center font-medium"
+                  className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200"
                 >
-                  Login
+                  <User className="h-5 w-5" />
+                  <span className="font-medium">Profile</span>
                 </Link>
-              )}
+              </div>
             </div>
           </motion.div>
         )}

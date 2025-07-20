@@ -136,11 +136,11 @@ const HomePage = ({ user }) => {
           className="flex flex-col sm:flex-row gap-4 justify-center items-center"
         >
           <button
-            onClick={() => user ? setShowRecordMemory(true) : navigate('/login')}
+            onClick={() => setShowRecordMemory(true)}
             className="group bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-colors duration-300 shadow-lg flex items-center gap-2"
           >
             <Mic className="h-5 w-5" />
-            {user ? 'Start Recording' : 'Get Started'}
+            Start Recording
             <ArrowRight className="h-5 w-5" />
           </button>
           <button
@@ -341,7 +341,7 @@ const HomePage = ({ user }) => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
-              onClick={() => user ? setShowRecordMemory(true) : navigate('/login')}
+              onClick={() => setShowRecordMemory(true)}
               className="bg-white text-purple-600 px-8 py-4 rounded-xl font-semibold text-lg transition-colors duration-300 shadow-lg flex items-center justify-center gap-2"
             >
               <Mic className="h-5 w-5" />

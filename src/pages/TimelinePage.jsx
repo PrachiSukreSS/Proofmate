@@ -380,30 +380,8 @@ const TimelinePage = ({ user }) => {
   );
 
   if (!user) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center space-y-6">
-          <div className="w-20 h-20 mx-auto bg-gradient-to-r from-purple-200 to-indigo-200 rounded-full flex items-center justify-center">
-            <Shield className="h-10 w-10 text-purple-400" />
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-2xl font-semibold text-slate-700">
-              Please Log In
-            </h2>
-            <p className="text-slate-600 max-w-md mx-auto">
-              You need to be logged in to view your memories and access the
-              timeline.
-            </p>
-          </div>
-          <button
-            onClick={() => navigate("/login")}
-            className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 px-6 py-3 text-white font-semibold rounded-xl transition-all duration-300"
-          >
-            Go to Login
-          </button>
-        </div>
-      </div>
-    );
+    // Set a demo user if none exists
+    user = { id: 'demo-user', email: 'demo@proofmate.ai' };
   }
 
   return (

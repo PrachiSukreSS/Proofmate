@@ -12,46 +12,16 @@ import HomePage from "./pages/HomePage";
 import TimelinePage from "./pages/TimelinePage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import ProfilePage from "./pages/ProfilePage";
-import LoginPage from "./pages/LoginPage";
 import PremiumPage from "./pages/PremiumPage";
 import PaymentPage from "./pages/PaymentPage";
 
 function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState({ id: 'demo-user', email: 'demo@proofmate.ai' });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize the application
-    const initializeApp = async () => {
-      try {
-        // Get initial user
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
-      } catch (error) {
-        console.warn('App initialization warning:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeApp();
-
-    // Listen to auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        try {
-          setUser(session?.user || null);
-          setIsLoading(false);
-        } catch (error) {
-          console.warn("Auth state change warning:", error);
-          setIsLoading(false);
-        }
-      }
-    );
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
+    // Set demo user and finish loading
+    setIsLoading(false);
   }, []);
 
   if (isLoading) {
@@ -71,7 +41,6 @@ function App() {
                 <Route path="/profile" element={<ProfilePage user={user} />} />
                 <Route path="/premium" element={<PremiumPage user={user} />} />
                 <Route path="/payment" element={<PaymentPage user={user} />} />
-                <Route path="/login" element={<LoginPage />} />
               </Routes>
             </AnimatePresence>
           </Layout>

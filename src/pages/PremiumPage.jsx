@@ -42,15 +42,6 @@ const PremiumPage = ({ user }) => {
   };
 
   const handleUpgrade = async (productId) => {
-    if (!user) {
-      toast({
-        title: "Login Required",
-        description: "Please log in to upgrade your subscription",
-        variant: "destructive"
-      });
-      return;
-    }
-
     // Redirect to payment page
     navigate('/payment', { state: { productId, plan: selectedPlan } });
   };

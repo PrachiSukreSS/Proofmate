@@ -59,27 +59,28 @@ const ProfilePage = ({ user }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
-      loadProfile();
-      loadStats();
-      loadAchievements();
-    }
+    // Use demo user if no user provided
+    const currentUser = user || { id: 'demo-user', email: 'demo@proofmate.ai' };
+    loadProfile();
+    loadStats();
+    loadAchievements();
   }, [user]);
 
   const loadProfile = async () => {
     try {
+      const currentUser = user || { id: 'demo-user', email: 'demo@proofmate.ai' };
       const { data, error } = await supabase
         .from("user_profiles")
-        .select("*")
-        .eq("user_id", user.id)
+        .select("*") 
+        .eq("user_id", currentUser.id)
         .single();
 
       if (error && error.code !== "PGRST116") throw error;
 
       if (data) {
         setProfile({
-          username: data.username || "",
-          email: user.email,
+          username: data.username || "Demo User",
+          email: currentUser.email,
           bio: data.bio || "",
           avatar_url: data.avatar_url || "",
           preferences: data.preferences || profile.preferences,
@@ -94,8 +95,8 @@ const ProfilePage = ({ user }) => {
       } else {
         // Create default profile
         const defaultProfile = {
-          user_id: user.id,
-          username: user.email.split("@")[0],
+          user_id: currentUser.id,
+          username: currentUser.email.split("@")[0],
           bio: "",
           preferences: profile.preferences,
         };
@@ -116,10 +117,11 @@ const ProfilePage = ({ user }) => {
 
   const loadStats = async () => {
     try {
+      const currentUser = user || { id: 'demo-user', email: 'demo@proofmate.ai' };
       const { data: memories, error } = await supabase
         .from("memories")
         .select("*")
-        .eq("user_id", user.id);
+        .eq("user_id", currentUser.id);
 
       if (error) throw error;
 
