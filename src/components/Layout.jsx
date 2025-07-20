@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import Navigation from "./Navigation";
 
-const Layout = ({ children, user }) => {
+const Layout = ({ children }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50/30 via-white to-blue-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-500">
       
@@ -12,7 +12,7 @@ const Layout = ({ children, user }) => {
       </div>
 
       {/* Navigation */}
-      <Navigation user={user} />
+      <Navigation />
 
       {/* Main Content */}
       <motion.main 

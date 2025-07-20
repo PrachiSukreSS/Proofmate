@@ -1,6 +1,5 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import { 
   Mic, 
   Brain, 
@@ -26,10 +25,9 @@ import {
   Phone,
   MapPin
 } from "lucide-react";
-import RecordMemory from "../components/RecordMemory";
+import VoiceRecorder from "../components/VoiceRecorder";
 
-const HomePage = ({ user }) => {
-  const navigate = useNavigate();
+const HomePage = () => {
   const [showRecordMemory, setShowRecordMemory] = React.useState(false);
 
   const features = [
@@ -100,7 +98,7 @@ const HomePage = ({ user }) => {
   ];
 
   if (showRecordMemory) {
-    return <RecordMemory onBack={() => setShowRecordMemory(false)} user={user} />;
+    return <VoiceRecorder onBack={() => setShowRecordMemory(false)} />;
   }
 
   return (
@@ -142,12 +140,6 @@ const HomePage = ({ user }) => {
             <Mic className="h-5 w-5" />
             Start Recording
             <ArrowRight className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => navigate('/timeline')}
-            className="px-8 py-4 border-2 border-purple-600 text-purple-600 dark:text-purple-400 rounded-xl font-semibold text-lg transition-colors duration-300"
-          >
-            View Demo
           </button>
         </motion.div>
       </section>
@@ -346,12 +338,6 @@ const HomePage = ({ user }) => {
             >
               <Mic className="h-5 w-5" />
               Start Recording Now
-            </button>
-            <button
-              onClick={() => navigate('/timeline')}
-              className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg transition-colors duration-300"
-            >
-              Explore Features
             </button>
           </div>
         </motion.div>
