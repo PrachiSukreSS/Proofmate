@@ -12,6 +12,7 @@ import {
   Sun,
   Home,
   Clock,
+  Crown,
 } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
 import { useTheme } from '../contexts/ThemeContext';
